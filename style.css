@@ -3,6 +3,8 @@ body {
     line-height: 1.8;
     padding: 2rem;
     color: #333;
+    /* パネルに隠れないよう、下部にパネルの高さ分の余白を確保 */
+    padding-bottom: calc(25vh + 2rem); 
 }
 
 #text-container span {
@@ -14,20 +16,41 @@ body {
     background-color: #e0f7fa; /* ホバー時に薄い青色にする */
 }
 
-/* ポップアップのスタイル */
-#popup {
-    position: absolute; /* 画面上の好きな位置に配置するため */
-    background-color: white;
-    border: 1px solid #ccc;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    padding: 10px;
-    border-radius: 5px;
-    max-width: 300px;
-    font-size: 0.9rem;
-    z-index: 100; /* 他の要素より手前に表示 */
+/* ▼▼▼▼▼ 翻訳パネルのスタイル (全面的に書き換え) ▼▼▼▼▼ */
+#translation-panel {
+    /* 画面下部に固定 */
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    
+    /* サイズ */
+    width: 100%;
+    height: 25vh; /* 画面の高さの25% */
+    
+    /* デザイン */
+    background-color: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    
+    /* 内側の余白や文字設定 */
+    padding: 1.5rem;
+    font-size: 1.1rem;
+    color: #212529;
+    
+    /* 長い訳が来た場合にスクロールできるようにする */
+    overflow-y: auto; 
+    
+    /* paddingを含んだサイズ計算にする */
+    box-sizing: border-box; 
+    
+    /* 表示/非表示のアニメーション */
+    transition: transform 0.3s ease-in-out;
+    transform: translateY(0);
 }
 
-/* ポップアップを隠すためのクラス */
-.hidden {
-    display: none;
+/* パネルを隠すためのクラス (アニメーションするように変更) */
+#translation-panel.hidden {
+    /* 画面の下側に見えなくなるように移動させる */
+    transform: translateY(100%); 
 }
+/* ▲▲▲▲▲ ここまで ▲▲▲▲▲ */
