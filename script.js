@@ -1,68 +1,106 @@
-            // --- ここからがJavaScriptの本体です ---
+document.addEventListener('DOMContentLoaded', () => {
+    const textContainer = document.getElementById('text-container');
+    // IDの変更に合わせて変数名も変更
+    const translationPanel = document.getElementById('translation-panel'); 
+    let dictionary = {};
 
-            // 2つのファイル（辞書とテキスト）を同時に非同期で読み込む
-            Promise.all([
-                // './' は「このHTMLファイルと同じ階層」を明示的に示す
-                fetch('./ejdict.json').then(response => {
-                    if (!response.ok) throw new Error('ejdict.jsonの読み込みに失敗しました');
-                    return response.json();
-                }),
-                fetch('./text.txt').then(response => {
-                    if (!response.ok) throw new Error('text.txtの読み込みに失敗しました');
-                    return response.text();
-                })
-            ])
-            .then(([dictData, textData]) => {
-                // 両方のファイルの読み込みが成功したら実行される
-                dictionary = dictData;
-                initializeText(textData);
-            })
-            .catch(error => {
-                // どちらかのファイル読み込みに失敗したらエラーを表示
-                console.error('データの読み込みに失敗しました:', error);
-                textContainer.textContent = 'データの読み込みに失敗しました。ファイル名やパスが正しいか確認してください。';
-            });
+    Promise.all([
+        fetch('ejdict.json').then(response => {
+            if (!response.ok) throw new Error('ejdict.jsonの読み込みに失敗しました');
+            return response.json();
+        }),
+        fetch('text.txt').then(response => {
+            if (!response.ok) throw new Error('text.txtの読み込みに失敗しました');
+            return response.text();
+        })
+    ])
+    .then(([dictData, textData]) => {
+        dictionary = dictData;
+        initializeText(textData);
+    })
+    .catch(error => {
+        console.error('データの読み込みに失敗しました:', error);
+        textContainer.textContent = 'データの読み込みに失敗しました。ページを再読み込みしてください。';
+    });
 
-            function initializeText(text) {
-                textContainer.innerHTML = '';
-                // 単語、句読点、スペースに分割するための正規表現
-                const regex = /\w+|[^\s\w]+|\s+/g;
-                const parts = text.match(regex) || [];
+    // この関数は変更ありません
+    function initializeText(text) {
+        textContainer.innerHTML = ''; 
+        const dictKeys = Object.keys(dictionary);
+        const idioms = dictKeys.filter(key => key.includes(' '));
+        idioms.sort((a, b) => b.length - a.length);
 
-                parts.forEach(part => {
-                    if (/\w/.test(part)) { // partが単語の場合
-                        const span = document.createElement('span');
-                        span.textContent = part;
-                        textContainer.appendChild(span);
-                    } else { // スペースや句読点の場合
-                        textContainer.appendChild(document.createTextNode(part));
-                    }
-                });
-            }
-
-            textContainer.addEventListener('click', (event) => {
-                const target = event.target;
-                if (target.tagName === 'SPAN') { // クリックされたのが単語(<span>)の場合
-                    const cleanWord = target.textContent.toLowerCase();
-                    if (dictionary[cleanWord]) {
-                        showPanel(dictionary[cleanWord]);
-                    } else {
-                        hidePanel();
-                    }
-                } else { // 単語以外の背景部分などをクリックした場合
-                    hidePanel();
+        let currentIndex = 0;
+        while (currentIndex < text.length) {
+            let foundMatch = false;
+            for (const idiom of idioms) {
+                if (text.substring(currentIndex).startsWith(idiom)) {
+                    const span = document.createElement('span');
+                    span.textContent = idiom;
+                    textContainer.appendChild(span);
+                    currentIndex += idiom.length;
+                    foundMatch = true;
+                    break; 
                 }
-            });
-
-            function showPanel(text) {
-                translationPanel.textContent = text;
-                translationPanel.classList.remove('hidden');
             }
-
-            function hidePanel() {
-                translationPanel.classList.add('hidden');
+            if (!foundMatch) {
+                let nextSpace = text.indexOf(' ', currentIndex);
+                let nextNewline = text.indexOf('\n', currentIndex);
+                if (nextSpace === -1) nextSpace = text.length;
+                if (nextNewline === -1) nextNewline = text.length;
+                const endOfChunk = Math.min(nextSpace, nextNewline, text.length);
+                if (endOfChunk > currentIndex) {
+                    const chunk = text.substring(currentIndex, endOfChunk);
+                    const parts = chunk.match(/\w+|[^\w\s]/g) || [chunk];
+                    parts.forEach(part => {
+                        if (part.match(/\w/)) {
+                            const span = document.createElement('span');
+                            span.textContent = part;
+                            textContainer.appendChild(span);
+                        } else {
+                            textContainer.appendChild(document.createTextNode(part));
+                        }
+                    });
+                    currentIndex = endOfChunk;
+                } else {
+                    const char = text[currentIndex];
+                    textContainer.appendChild(document.createTextNode(char));
+                    currentIndex++;
+                }
             }
-        });
-    </script>
-</body>
-</html>
+        }
+    }
+
+    // 単語クリック時の処理 (呼び出す関数名を変更)
+    textContainer.addEventListener('click', (event) => {
+        if (event.target.tagName === 'SPAN') {
+            const rawWord = event.target.textContent;
+            const cleanWord = rawWord.toLowerCase();
+            if (cleanWord && dictionary[cleanWord]) {
+                const translation = dictionary[cleanWord];
+                // 変更: showPanelを呼び出す
+                showPanel(translation); 
+            } else {
+                // 変更: hidePanelを呼び出す
+                hidePanel(); 
+            }
+        }
+    });
+
+    // ▼▼▼▼▼ パネル表示/非表示の関数 (シンプルに変更) ▼▼▼▼▼
+    function showPanel(text) {
+        translationPanel.textContent = text;
+        translationPanel.classList.remove('hidden');
+    }
+
+    function hidePanel() {
+        translationPanel.classList.add('hidden');
+    }
+
+    // パネルの外側(本文エリア)をクリックしたらパネルを隠す
+    textContainer.addEventListener('click', (event) => {
+        if (event.target.id === 'text-container') {
+             hidePanel();
+        }
+    });
+});
