@@ -1,75 +1,55 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Text Reader</title>
-    <style>
-        body { font-family: sans-serif; line-height: 1.8; font-size: 1.2em; }
-        #text-container { padding: 1em; border: 1px solid #ccc; border-radius: 4px; word-break: keep-all; overflow-wrap: break-word; }
-        #text-container span:hover { background-color: #e0e0e0; cursor: pointer; }
-        #translation-panel { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 80%; max-width: 600px; padding: 1em; background-color: #333; color: white; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); transition: opacity 0.3s, visibility 0.3s; }
-        #translation-panel.hidden { opacity: 0; visibility: hidden; }
-    </style>
-</head>
-<body>
-    <div id="text-container"></div>
-    <div id="translation-panel" class="hidden"></div>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const textContainer = document.getElementById('text-container');
-            const translationPanel = document.getElementById('translation-panel');
-            let dictionary = {};
+            // --- ここからがJavaScriptの本体です ---
 
+            // 2つのファイル（辞書とテキスト）を同時に非同期で読み込む
             Promise.all([
-                fetch('ejdict.json').then(response => {
+                // './' は「このHTMLファイルと同じ階層」を明示的に示す
+                fetch('./ejdict.json').then(response => {
                     if (!response.ok) throw new Error('ejdict.jsonの読み込みに失敗しました');
                     return response.json();
                 }),
-                fetch('text.txt').then(response => {
+                fetch('./text.txt').then(response => {
                     if (!response.ok) throw new Error('text.txtの読み込みに失敗しました');
                     return response.text();
                 })
             ])
             .then(([dictData, textData]) => {
+                // 両方のファイルの読み込みが成功したら実行される
                 dictionary = dictData;
                 initializeText(textData);
             })
             .catch(error => {
+                // どちらかのファイル読み込みに失敗したらエラーを表示
                 console.error('データの読み込みに失敗しました:', error);
-                textContainer.textContent = 'データの読み込みに失敗しました。ページを再読み込みするか、デベロッパーツールでエラーを確認してください。';
+                textContainer.textContent = 'データの読み込みに失敗しました。ファイル名やパスが正しいか確認してください。';
             });
 
             function initializeText(text) {
                 textContainer.innerHTML = '';
+                // 単語、句読点、スペースに分割するための正規表現
                 const regex = /\w+|[^\s\w]+|\s+/g;
                 const parts = text.match(regex) || [];
 
                 parts.forEach(part => {
-                    if (/\w/.test(part)) {
+                    if (/\w/.test(part)) { // partが単語の場合
                         const span = document.createElement('span');
                         span.textContent = part;
                         textContainer.appendChild(span);
-                    } else {
+                    } else { // スペースや句読点の場合
                         textContainer.appendChild(document.createTextNode(part));
-                        const lastChar = part.slice(-1);
-                        if (/[.,";]/.test(lastChar)) {
-                            textContainer.appendChild(document.createElement('wbr'));
-                        }
                     }
                 });
             }
 
             textContainer.addEventListener('click', (event) => {
                 const target = event.target;
-                if (target.tagName === 'SPAN') {
+                if (target.tagName === 'SPAN') { // クリックされたのが単語(<span>)の場合
                     const cleanWord = target.textContent.toLowerCase();
-                    if (cleanWord && dictionary[cleanWord]) {
+                    if (dictionary[cleanWord]) {
                         showPanel(dictionary[cleanWord]);
                     } else {
                         hidePanel();
                     }
-                } else if (target.id === 'text-container') {
+                } else { // 単語以外の背景部分などをクリックした場合
                     hidePanel();
                 }
             });
