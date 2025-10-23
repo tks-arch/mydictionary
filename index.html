@@ -3,20 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Text Reader</title>
-    <style>
-        body { font-family: sans-serif; line-height: 1.8; font-size: 1.2em; }
-        #text-container { padding: 1em; border: 1px solid #ccc; border-radius: 4px; word-break: keep-all; overflow-wrap: break-word; }
-        #text-container span:hover { background-color: #e0e0e0; cursor: pointer; }
-        #translation-panel { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 80%; max-width: 600px; padding: 1em; background-color: #333; color: white; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); transition: opacity 0.3s, visibility 0.3s; }
-        #translation-panel.hidden { opacity: 0; visibility: hidden; }
-    </style>
+    <title>My Dictionary</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="text-container"></div>
+    <h1>Alice's Adventures in Wonderland</h1>
+    <div id="text-container">
+        </div>
+
     <div id="translation-panel" class="hidden"></div>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const textContainer = document.getElementById('text-container');
-            const translationPanel = document.getElementById('translation-panel');
-            let dictionary = {};
+
+    <script src="script.js"></script>
+</body>
+</html>
