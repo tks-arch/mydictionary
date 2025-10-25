@@ -9,9 +9,6 @@
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
         }
         .header {
             padding: 20px;
@@ -19,24 +16,22 @@
             border-bottom: 1px solid #dee2e6;
         }
         .main-container {
-            flex: 1;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
         }
         .content-area {
-            flex: 0 0 75%;
             padding: 20px;
-            overflow-y: auto;
             line-height: 1.6;
         }
         .translation-area {
-            flex: 0 0 25%;
             background-color: #f8f9fa;
             border-top: 2px solid #dee2e6;
             padding: 20px;
+            position: sticky;
+            bottom: 0;
+            height: 25vh;
             overflow-y: auto;
-            min-height: 0;
+            box-sizing: border-box;
         }
         .content {
             white-space: pre-line;
