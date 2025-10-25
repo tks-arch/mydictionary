@@ -3,16 +3,102 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Dictionary</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Data Sort Tool</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .main-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .content-area {
+            flex: 0 0 75%;
+            padding: 20px;
+            overflow-y: auto;
+            line-height: 1.6;
+        }
+        .translation-area {
+            flex: 0 0 25%;
+            background-color: #f8f9fa;
+            border-top: 2px solid #dee2e6;
+            padding: 20px;
+            overflow-y: auto;
+            min-height: 0;
+        }
+        .content {
+            white-space: pre-line;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            word-break: break-word;
+        }
+        .sentence {
+            padding: 10px;
+            margin: 0;
+        }
+        .bg-light {
+            background-color: #f0f0f0; /* 薄いグレー */
+        }
+        .bg-dark {
+            background-color: #d0d0d0; /* 濃いグレー */
+        }
+        .quote {
+            color: blue;
+            font-weight: bold;
+        }
+        .word {
+            cursor: pointer;
+        }
+        .word:hover {
+            background-color: #ffffcc;
+        }
+        .word.multi-word {
+            color: blue;
+        }
+        .tooltip {
+            position: fixed;
+            background-color: #333;
+            color: white;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 14px;
+            max-width: 300px;
+            z-index: 1000;
+            display: none;
+        }
+        .translation-content {
+            font-size: 16px;
+            line-height: 1.5;
+            color: #333;
+        }
+    </style>
 </head>
 <body>
-    <h1>Alice's Adventures in Wonderland</h1>
-    <div id="text-container">
+    <div class="header">
+        <h1>Alice's Adventures in Wonderland</h1>
+    </div>
+    <div class="main-container">
+        <div class="content-area">
+            <div id="content" class="content">Loading...</div>
         </div>
-
-    <div id="translation-panel" class="hidden"></div>
-
+        <div class="translation-area">
+            <h3>訳</h3>
+            <div id="translation" class="translation-content">単語をクリックすると訳が表示されます</div>
+        </div>
+    </div>
+    <div id="tooltip" class="tooltip"></div>
     <script src="script.js"></script>
 </body>
 </html>
