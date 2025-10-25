@@ -1,10 +1,11 @@
-const CACHE_NAME = 'data-sort-v1';
+const CACHE_NAME = 'data-sort-v2';
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/script.js',
-  '/data.json',
-  '/manifest.json'
+  './',
+  './index.html',
+  './script.js',
+  './pwa.js',
+  './data.json',
+  './manifest.json'
 ];
 
 // インストールイベント
@@ -16,6 +17,7 @@ self.addEventListener('install', function(event) {
         return cache.addAll(urlsToCache);
       })
   );
+  self.skipWaiting();
 });
 
 // フェッチイベント
@@ -46,4 +48,5 @@ self.addEventListener('activate', function(event) {
       );
     })
   );
+  self.clients.claim();
 });
