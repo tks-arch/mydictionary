@@ -312,3 +312,31 @@ body.hard-mode .word.has-user-label:hover {
     background-color: #fff59d !important;
 }
 
+/* 選択テキスト用フローティングボタン */
+.floating-save-button {
+    position: fixed;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 56px;
+    height: 56px;
+    font-size: 24px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    z-index: 1500;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s;
+}
+
+.floating-save-button.show {
+    display: flex;
+}
+
+.floating-save-button:active {
+    transform: scale(0.95);
+    background-color: #0056b3;
+}
+

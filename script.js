@@ -468,5 +468,73 @@ function setupUserLabelModal() {
             }
         }
     });
+    
+    // フローティングボタンの設定
+    const floatingButton = document.getElementById('floatingSaveButton');
+    let selectionCheckTimer = null;
+    
+    // 選択テキストの変化を監視
+    function checkSelection() {
+        const selectedText = getSelectedText();
+        
+        if (selectedText && selectedText.length > 0) {
+            // 選択範囲の位置を取得
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                const rect = range.getBoundingClientRect();
+                
+                // ボタンを選択範囲の近くに表示
+                floatingButton.style.top = (rect.bottom + window.scrollY + 10) + 'px';
+                floatingButton.style.left = (rect.right + window.scrollX - 56) + 'px';
+                floatingButton.classList.add('show');
+            }
+        } else {
+            floatingButton.classList.remove('show');
+        }
+    }
+    
+    // 選択変更イベント
+    document.addEventListener('selectionchange', function() {
+        clearTimeout(selectionCheckTimer);
+        selectionCheckTimer = setTimeout(checkSelection, 100);
+    });
+    
+    // フローティングボタンのクリックイベント
+    floatingButton.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const selectedText = getSelectedText();
+        if (selectedText) {
+            // 段落をまたいでいるかチェック
+            if (isSelectionCrossingParagraphs()) {
+                alert('エラー: 段落をまたいだラベル付けはできません。\n1つの段落内でテキストを選択してください。');
+                return;
+            }
+            
+            // 記号が含まれているかチェック
+            if (containsSymbols(selectedText)) {
+                alert('エラー: 記号が含まれています。\nアルファベットとスペースのみを選択してください。');
+                return;
+            }
+            
+            // 選択テキストが辞書の単語を含むかチェック
+            const validatedText = checkIfMultipleWords(selectedText);
+            if (validatedText) {
+                showModal(validatedText, null);
+                // ボタンを非表示
+                floatingButton.classList.remove('show');
+            }
+        }
+    });
+    
+    // モーダルを閉じたら選択を解除してボタンを非表示
+    const originalHideModal = hideModal;
+    hideModal = function() {
+        originalHideModal();
+        window.getSelection().removeAllRanges();
+        floatingButton.classList.remove('show');
+    };
 }
 
