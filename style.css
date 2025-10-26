@@ -1,56 +1,116 @@
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
 body {
-    font-family: serif;
-    line-height: 1.8;
-    padding: 2rem;
-    color: #333;
-    /* パネルに隠れないよう、下部にパネルの高さ分の余白を確保 */
-    padding-bottom: calc(25vh + 2rem); 
+    font-family: Arial, sans-serif;
 }
 
-#text-container span {
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-#text-container span:hover {
-    background-color: #e0f7fa; /* ホバー時に薄い青色にする */
-}
-
-/* ▼▼▼▼▼ 翻訳パネルのスタイル (全面的に書き換え) ▼▼▼▼▼ */
-#translation-panel {
-    /* 画面下部に固定 */
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    
-    /* サイズ */
-    width: 100%;
-    height: 25vh; /* 画面の高さの25% */
-    
-    /* デザイン */
+.header {
+    padding: 20px;
     background-color: #f8f9fa;
-    border-top: 1px solid #dee2e6;
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-    
-    /* 内側の余白や文字設定 */
-    padding: 1.5rem;
-    font-size: 1.1rem;
-    color: #212529;
-    
-    /* 長い訳が来た場合にスクロールできるようにする */
-    overflow-y: auto; 
-    
-    /* paddingを含んだサイズ計算にする */
-    box-sizing: border-box; 
-    
-    /* 表示/非表示のアニメーション */
-    transition: transform 0.3s ease-in-out;
-    transform: translateY(0);
+    border-bottom: 1px solid #dee2e6;
 }
 
-/* パネルを隠すためのクラス (アニメーションするように変更) */
-#translation-panel.hidden {
-    /* 画面の下側に見えなくなるように移動させる */
-    transform: translateY(100%); 
+.main-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
 }
-/* ▲▲▲▲▲ ここまで ▲▲▲▲▲ */
+
+.content-area {
+    line-height: 1.6;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.translation-area {
+    background-color: #f8f9fa;
+    border-top: 2px solid #dee2e6;
+    padding: 20px;
+    height: 30vh;
+    overflow-y: auto;
+    box-sizing: border-box;
+    flex-shrink: 0;
+}
+
+.content {
+    padding: 20px;
+    white-space: pre-line;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+.sentence {
+    padding: 10px;
+    margin: 0;
+}
+
+.bg-light {
+    background-color: #f0f0f0; /* 薄いグレー */
+}
+
+.bg-dark {
+    background-color: #e0e0e0; /* 濃いグレー */
+}
+
+.quote {
+    color: blue;
+    font-weight: bold;
+}
+
+.word {
+    cursor: pointer;
+}
+
+.word:hover {
+    background-color: #ffffcc;
+}
+
+.word.multi-word {
+    color: blue;
+}
+
+.tooltip {
+    position: fixed;
+    background-color: #333;
+    color: white;
+    padding: 8px;
+    border-radius: 4px;
+    font-size: 14px;
+    max-width: 300px;
+    z-index: 1000;
+    display: none;
+}
+
+.translation-content {
+    font-size: 16px;
+    line-height: 1.5;
+    color: #333;
+}
+
+.italic-text {
+    font-style: italic;
+}
+
+/* Translation item styles */
+.translation-item {
+    margin-bottom: 10px;
+    padding: 10px;
+    background-color: white;
+    border-radius: 4px;
+    border-left: 4px solid #007bff;
+}
+
+.translation-word {
+    color: #007bff;
+}
+
+.translation-meaning {
+    color: #333;
+}
+

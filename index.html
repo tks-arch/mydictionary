@@ -9,89 +9,15 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Alice Reader">
     <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="style.css">
     <title>Alice's Adventures in Wonderland</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-        }
-        .header {
-            padding: 20px;
-            background-color: #f8f9fa;
-            border-bottom: 1px solid #dee2e6;
-        }
-        .main-container {
-            display: flex;
-            flex-direction: column;
-        }
-        .content-area {
-            padding: 20px;
-            line-height: 1.6;
-        }
-        .translation-area {
-            background-color: #f8f9fa;
-            border-top: 2px solid #dee2e6;
-            padding: 20px;
-            position: sticky;
-            bottom: 0;
-            height: 25vh;
-            overflow-y: auto;
-            box-sizing: border-box;
-        }
-        .content {
-            white-space: pre-line;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-            word-break: break-word;
-        }
-        .sentence {
-            padding: 10px;
-            margin: 0;
-        }
-        .bg-light {
-            background-color: #f0f0f0; /* 薄いグレー */
-        }
-        .bg-dark {
-            background-color: #e0e0e0; /* 濃いグレー */
-        }
-        .quote {
-            color: blue;
-            font-weight: bold;
-        }
-        .word {
-            cursor: pointer;
-        }
-        .word:hover {
-            background-color: #ffffcc;
-        }
-        .word.multi-word {
-            color: blue;
-        }
-        .tooltip {
-            position: fixed;
-            background-color: #333;
-            color: white;
-            padding: 8px;
-            border-radius: 4px;
-            font-size: 14px;
-            max-width: 300px;
-            z-index: 1000;
-            display: none;
-        }
-        .translation-content {
-            font-size: 16px;
-            line-height: 1.5;
-            color: #333;
-        }
-    </style>
 </head>
 <body>
-    <div class="header">
-        <h1>Alice's Adventures in Wonderland</h1>
-    </div>
     <div class="main-container">
         <div class="content-area">
+            <div class="header">
+                <h1>Alice's Adventures in Wonderland</h1>
+            </div>
             <div id="content" class="content">Loading...</div>
         </div>
         <div class="translation-area">
