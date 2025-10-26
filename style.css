@@ -14,6 +14,100 @@ body {
     border-bottom: 1px solid #dee2e6;
 }
 
+.mode-switch-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.mode-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #495057;
+}
+
+/* スイッチのスタイル */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #28a745;
+    transition: .4s;
+    border-radius: 24px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #dc3545;
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+/* Hardモード時のスタイル */
+body.hard-mode .word {
+    background-color: transparent !important;
+    padding: 0;
+}
+
+body.hard-mode .word:hover {
+    background-color: transparent !important;
+}
+
+/* Hardモード時の隠し機能: Ctrl+Shift+Dで灰色ハイライト表示 */
+body.hard-mode.show-hard-highlights .word {
+    background-color: #f5f5f5 !important;
+    padding: 2px 4px;
+}
+
+body.hard-mode.show-hard-highlights .word:hover {
+    background-color: #e0e0e0 !important;
+}
+
+/* Hardモード時でも2語以上の熟語はハイライト表示 */
+body.hard-mode .word.multi-word {
+    background-color: #e3f2fd !important;
+    padding: 2px 4px;
+}
+
+body.hard-mode .word.multi-word.color-2 {
+    background-color: #bbdefb !important;
+}
+
+body.hard-mode .word.multi-word:hover {
+    background-color: #90caf9 !important;
+}
+
 .main-container {
     display: flex;
     flex-direction: column;
@@ -62,7 +156,6 @@ body {
 
 .quote {
     color: blue;
-    font-weight: bold;
 }
 
 .word {
@@ -81,10 +174,6 @@ body {
 
 .word:hover {
     background-color: #90caf9; /* ホバー時はさらに濃い青 */
-}
-
-.word.multi-word {
-    font-weight: bold;
 }
 
 .tooltip {

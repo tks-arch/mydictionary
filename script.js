@@ -22,6 +22,10 @@ function getContainerStatus(text, currentIndex) {
 
 // 辞書データを格納するグローバル変数
 let vocabulary = {};
+let words = {};
+
+// モード切り替えの設定
+let isHardMode = false;
 
 // 単語境界と単語文字のパターン定数
 // アンダースコアは単語の一部ではなく境界文字として扱う
@@ -122,143 +126,10 @@ fetch('data.json')
     .then(jsonData => {
         const data = jsonData.text;
         vocabulary = jsonData.vocab || {};
+        words = jsonData.words || {};
         
-        // 現在の文を保存して新しい文を開始するヘルパー
-        const saveSentence = (sentences, sentence) => {
-            if (sentence.trim()) {
-                sentences.push(sentence.trim());
-            }
-        };
-        
-        // 引用符、改行、交互背景を処理するためにテキストを処理
-        let sentences = [];
-        let currentSentence = '';
-        
-        for (let i = 0; i < data.length; i++) {
-            const char = data[i];
-            const status = getContainerStatus(data, i);
-            
-            if (char === '"' && !status.inParentheses) {
-                // 開き引用符 - 現在の文を保存して新しい文を開始
-                if (!status.inAnyContainer) {
-                    saveSentence(sentences, currentSentence);
-                    currentSentence = char;
-                } 
-                // 閉じ引用符 - 現在の文に追加して保存
-                else {
-                    currentSentence += char;
-                    saveSentence(sentences, currentSentence);
-                    currentSentence = '';
-                }
-            } else if (char === '(') {
-                // 開き括弧 - 現在の文を保存して新しい文を開始
-                saveSentence(sentences, currentSentence);
-                currentSentence = char;
-            } else if (char === ')') {
-                // 閉じ括弧 - 現在の文に追加して保存
-                currentSentence += char;
-                saveSentence(sentences, currentSentence);
-                currentSentence = '';
-            } else if (SENTENCE_ENDINGS.includes(char) && !status.inAnyContainer) {
-                // 文の終わり - 保存
-                currentSentence += char;
-                saveSentence(sentences, currentSentence);
-                currentSentence = '';
-            } else if (char !== '\n' && char !== '\r') {
-                // 現在の文に文字を追加（改行はスキップ）
-                currentSentence += char;
-            }
-        }
-        
-        // 交互背景でHTMLを作成
-        const contentDiv = document.getElementById('content');
-        contentDiv.innerHTML = '';
-        
-        // 辞書を前処理：正規化されたマップを作成し長さでソート
-        const vocabEntries = Object.keys(vocabulary).map(word => ({
-            original: word,
-            normalized: word.toLowerCase(),
-            meaning: vocabulary[word],
-            length: word.length
-        })).sort((a, b) => b.length - a.length);
-        
-        // 文中の辞書マッチを検索する関数
-        const findMatches = (text) => {
-            const markedPositions = new Set();
-            const matches = [];
-            
-            const hasOverlap = (start, end) => {
-                for (let j = start; j < end; j++) {
-                    if (markedPositions.has(j)) return true;
-                }
-                return false;
-            };
-            
-            const markRange = (start, end) => {
-                for (let j = start; j < end; j++) {
-                    markedPositions.add(j);
-                }
-            };
-            
-            for (let i = 0; i < text.length; i++) {
-                if (markedPositions.has(i) || isInsideHtmlTag(text, i) || !isAtWordBoundary(text, i)) {
-                    continue;
-                }
-                
-                for (const vocabEntry of vocabEntries) {
-                    const matchResult = tryMatchAtPosition(text, i, vocabEntry);
-                    
-                    if (matchResult && !hasOverlap(matchResult.start, matchResult.end)) {
-                        markRange(matchResult.start, matchResult.end);
-                        matches.push(matchResult);
-                        break;
-                    }
-                }
-            }
-            
-            return matches;
-        };
-        
-        // マッチをテキストに適用する関数
-        const applyMatches = (text, matches) => {
-            matches.sort((a, b) => b.start - a.start);
-            matches.forEach((match, index) => {
-                const matched = text.substring(match.start, match.end);
-                const colorClass = (index % 2 === 0) ? 'color-1' : 'color-2';
-                const multiWordClass = matched.includes(' ') ? 'multi-word' : '';
-                const wordClass = `word ${colorClass} ${multiWordClass}`.trim();
-                const replacement = `<span class="${wordClass}" data-meaning="${match.meaning}">${matched}</span>`;
-                
-                text = text.substring(0, match.start) + replacement + text.substring(match.end);
-            });
-            return text;
-        };
-        
-        // 各文を処理
-        sentences.forEach((sentence, index) => {
-            const div = document.createElement('div');
-            div.className = 'sentence ' + (index % 2 === 0 ? 'bg-light' : 'bg-dark');
-            
-            // テキストフォーマットを適用
-            let processedSentence = sentence
-                .replace(QUOTE_PATTERN, '<span class="quote">"$1"</span>');
-            
-            // 辞書マッチを検索して適用
-            const matches = findMatches(processedSentence);
-            processedSentence = applyMatches(processedSentence, matches);
-            
-            div.innerHTML = processedSentence;
-            contentDiv.appendChild(div);
-        });
-
-        // 辞書単語にクリックイベントリスナーを追加
-        document.querySelectorAll('.word').forEach(wordElement => {
-            wordElement.addEventListener('click', function(e) {
-                e.preventDefault();
-                const meaning = this.getAttribute('data-meaning');
-                showTranslation(this, meaning);
-            });
-        });
+        // レンダリング関数を呼び出し
+        renderContent(data, vocabulary, words, isHardMode);
     })
     .catch(error => {
         document.getElementById('content').innerHTML = 'Error loading JSON file: ' + error.message;
@@ -280,4 +151,55 @@ function showTranslation(element, meaning) {
     // 翻訳エリアの上部に追加
     translationDiv.innerHTML = translationHTML + translationDiv.innerHTML;
 }
+
+
+// モード切り替えの初期化
+window.addEventListener('DOMContentLoaded', function() {
+    const modeToggle = document.getElementById('modeToggle');
+    
+    // 保存されたモード設定を読み込む
+    const savedMode = localStorage.getItem('readingMode');
+    if (savedMode === 'hard') {
+        modeToggle.checked = true;
+        document.body.classList.add('hard-mode');
+        isHardMode = true;
+    }
+    
+    // 保存されたハイライト設定を読み込む
+    const showHardHighlights = localStorage.getItem('showHardHighlights');
+    if (showHardHighlights === 'true') {
+        document.body.classList.add('show-hard-highlights');
+    }
+    
+    // モード切り替えイベント
+    modeToggle.addEventListener('change', function() {
+        isHardMode = this.checked;
+        
+        if (isHardMode) {
+            document.body.classList.add('hard-mode');
+            localStorage.setItem('readingMode', 'hard');
+        } else {
+            document.body.classList.remove('hard-mode');
+            localStorage.setItem('readingMode', 'easy');
+        }
+        
+        // コンテンツを再レンダリング
+        reloadContent(vocabulary, words, isHardMode);
+    });
+    
+    // 隠し機能: Ctrl+Shift+Dでハードモードの灰色ハイライトをトグル
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+            e.preventDefault();
+            
+            if (document.body.classList.contains('show-hard-highlights')) {
+                document.body.classList.remove('show-hard-highlights');
+                localStorage.setItem('showHardHighlights', 'false');
+            } else {
+                document.body.classList.add('show-hard-highlights');
+                localStorage.setItem('showHardHighlights', 'true');
+            }
+        }
+    });
+});
 

@@ -16,6 +16,14 @@
     <div class="main-container">
         <div class="content-area">
             <div class="header">
+                <div class="mode-switch-container">
+                    <span class="mode-label">Easy</span>
+                    <label class="switch">
+                        <input type="checkbox" id="modeToggle">
+                        <span class="slider"></span>
+                    </label>
+                    <span class="mode-label">Hard</span>
+                </div>
                 <h1>Alice's Adventures in Wonderland</h1>
             </div>
             <div id="content" class="content">Loading...</div>
@@ -27,6 +35,7 @@
     </div>
     <div id="tooltip" class="tooltip"></div>
     <script src="pwa.js"></script>
+    <script src="renderer.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
