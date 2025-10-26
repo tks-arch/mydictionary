@@ -1,0 +1,8 @@
+{
+  "_comment": "キャッシュ動作の設定ファイル",
+  "_usage": "enableCache を false にするとキャッシュ無効、true で有効",
+  "_version": "cacheVersion を変更すると古いキャッシュがクリアされます",
+  "enableCache": false,
+  "cacheVersion": "v4"
+}
+

@@ -31,7 +31,6 @@ const SENTENCE_ENDINGS = ['.', '!', '?'];
 
 // テキストフォーマット用の正規表現
 const QUOTE_PATTERN = /"([^"]*)"/g;
-const ITALIC_PATTERN = /_([^_]*?[,.!?])/g;
 
 // 位置がHTMLタグ内にあるかをチェックするヘルパー関数
 function isInsideHtmlTag(text, position) {
@@ -62,7 +61,8 @@ function isAtWordBoundary(text, position) {
 
 // 特定の位置で辞書の単語とマッチングを試みるヘルパー関数
 function tryMatchAtPosition(text, startPos, vocabEntry) {
-    const wordToMatch = vocabEntry.original;
+    // 辞書の単語から_を削除して正規化
+    const wordToMatch = vocabEntry.original.replace(/_/g, '');
     
     // テキストから候補を抽出
     let endPos = startPos;
@@ -72,6 +72,14 @@ function tryMatchAtPosition(text, startPos, vocabEntry) {
     // 辞書の単語を1文字ずつマッチング
     while (wordIndex < wordToMatch.length && endPos < text.length) {
         const textChar = text[endPos];
+        
+        // テキスト中の_はスキップ
+        if (textChar === '_') {
+            extractedText += textChar;
+            endPos++;
+            continue;
+        }
+        
         const wordChar = wordToMatch[wordIndex];
         
         // 文字をマッチング（大文字小文字を区別しない）
@@ -214,9 +222,11 @@ fetch('data.json')
         // マッチをテキストに適用する関数
         const applyMatches = (text, matches) => {
             matches.sort((a, b) => b.start - a.start);
-            matches.forEach(match => {
+            matches.forEach((match, index) => {
                 const matched = text.substring(match.start, match.end);
-                const wordClass = matched.includes(' ') ? 'word multi-word' : 'word';
+                const colorClass = (index % 2 === 0) ? 'color-1' : 'color-2';
+                const multiWordClass = matched.includes(' ') ? 'multi-word' : '';
+                const wordClass = `word ${colorClass} ${multiWordClass}`.trim();
                 const replacement = `<span class="${wordClass}" data-meaning="${match.meaning}">${matched}</span>`;
                 
                 text = text.substring(0, match.start) + replacement + text.substring(match.end);
@@ -231,8 +241,7 @@ fetch('data.json')
             
             // テキストフォーマットを適用
             let processedSentence = sentence
-                .replace(QUOTE_PATTERN, '<span class="quote">"$1"</span>')
-                .replace(ITALIC_PATTERN, '<span class="italic-text">_$1</span>');
+                .replace(QUOTE_PATTERN, '<span class="quote">"$1"</span>');
             
             // 辞書マッチを検索して適用
             const matches = findMatches(processedSentence);

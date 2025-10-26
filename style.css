@@ -51,11 +51,13 @@ body {
 }
 
 .bg-light {
-    background-color: #f0f0f0; /* 薄いグレー */
+    border: 1px solid #d0d0d0;
+    margin-top: -1px;
 }
 
 .bg-dark {
-    background-color: #e0e0e0; /* 濃いグレー */
+    border: 1px solid #d0d0d0;
+    margin-top: -1px;
 }
 
 .quote {
@@ -65,14 +67,24 @@ body {
 
 .word {
     cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+
+.word.color-1 {
+    background-color: #e3f2fd; /* 薄い青 */
+}
+
+.word.color-2 {
+    background-color: #bbdefb; /* 濃い青 */
 }
 
 .word:hover {
-    background-color: #ffffcc;
+    background-color: #90caf9; /* ホバー時はさらに濃い青 */
 }
 
 .word.multi-word {
-    color: blue;
+    font-weight: bold;
 }
 
 .tooltip {
@@ -91,10 +103,6 @@ body {
     font-size: 16px;
     line-height: 1.5;
     color: #333;
-}
-
-.italic-text {
-    font-style: italic;
 }
 
 /* Translation item styles */
