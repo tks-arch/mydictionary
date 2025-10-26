@@ -410,64 +410,8 @@ function setupUserLabelModal() {
         });
     };
     
-    // コンテンツエリア全体での右クリック（選択テキスト用）
-    const contentArea = document.getElementById('content');
-    if (contentArea) {
-        contentArea.addEventListener('contextmenu', function(e) {
-            const selectedText = getSelectedText();
-            if (selectedText) {
-                // 段落をまたいでいるかチェック
-                if (isSelectionCrossingParagraphs()) {
-                    e.preventDefault();
-                    alert('エラー: 段落をまたいだラベル付けはできません。\n1つの段落内でテキストを選択してください。');
-                    return;
-                }
-                
-                // 記号が含まれているかチェック
-                if (containsSymbols(selectedText)) {
-                    e.preventDefault();
-                    alert('エラー: 記号が含まれています。\nアルファベットとスペースのみを選択してください。');
-                    return;
-                }
-                
-                // 選択テキストが辞書の単語を含むかチェック
-                const validatedText = checkIfMultipleWords(selectedText);
-                if (validatedText) {
-                    e.preventDefault();
-                    showModal(validatedText, null);
-                }
-            }
-        });
-    }
-    
-    // Shift+Sキーで選択テキストをユーザー辞書に保存
-    document.addEventListener('keydown', function(e) {
-        if (e.shiftKey && e.key === 'S') {
-            const selectedText = getSelectedText();
-            if (selectedText) {
-                // 段落をまたいでいるかチェック
-                if (isSelectionCrossingParagraphs()) {
-                    e.preventDefault();
-                    alert('エラー: 段落をまたいだラベル付けはできません。\n1つの段落内でテキストを選択してください。');
-                    return;
-                }
-                
-                // 記号が含まれているかチェック
-                if (containsSymbols(selectedText)) {
-                    e.preventDefault();
-                    alert('エラー: 記号が含まれています。\nアルファベットとスペースのみを選択してください。');
-                    return;
-                }
-                
-                // 選択テキストが辞書の単語を含むかチェック
-                const validatedText = checkIfMultipleWords(selectedText);
-                if (validatedText) {
-                    e.preventDefault();
-                    showModal(validatedText, null);
-                }
-            }
-        }
-    });
+    // 選択テキストからの保存はフローティングボタンのみで行う
+    // （右クリック、Shift+S、長押しは無効化）
     
     // フローティングボタンの設定
     const floatingButton = document.getElementById('floatingSaveButton');
