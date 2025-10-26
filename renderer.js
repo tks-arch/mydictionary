@@ -1,7 +1,7 @@
 // レンダリング関連の関数を集めたモジュール
 
 // コンテンツをレンダリングする関数
-function renderContent(data, vocabulary, words, isHardMode) {
+function renderContent(data, vocabulary, words, isHardMode, userLabels = {}) {
     // 現在の文を保存して新しい文を開始するヘルパー
     const saveSentence = (sentences, sentence) => {
         if (sentence.trim()) {
@@ -61,10 +61,18 @@ function renderContent(data, vocabulary, words, isHardMode) {
     // 辞書を前処理：正規化されたマップを作成し長さでソート
     const getVocabEntries = () => {
         const dict = getDictionary();
-        return Object.keys(dict).map(word => ({
+        
+        // ユーザーラベルを辞書に統合
+        const combinedDict = { ...dict };
+        Object.keys(userLabels).forEach(labelKey => {
+            // ユーザーラベルのキー（単語）を辞書に追加（意味としてラベル値を使用）
+            combinedDict[labelKey] = userLabels[labelKey];
+        });
+        
+        return Object.keys(combinedDict).map(word => ({
             original: word,
             normalized: word.toLowerCase(),
-            meaning: dict[word],
+            meaning: combinedDict[word],
             length: word.length
         })).sort((a, b) => b.length - a.length);
     };
@@ -112,10 +120,24 @@ function renderContent(data, vocabulary, words, isHardMode) {
         matches.sort((a, b) => b.start - a.start);
         matches.forEach((match, index) => {
             const matched = text.substring(match.start, match.end);
-            const colorClass = (index % 2 === 0) ? 'color-1' : 'color-2';
             const multiWordClass = matched.includes(' ') ? 'multi-word' : '';
-            const wordClass = `word ${colorClass} ${multiWordClass}`.trim();
-            const replacement = `<span class="${wordClass}" data-meaning="${match.meaning}">${matched}</span>`;
+            
+            // ユーザーラベルをチェック
+            const normalizedWord = matched.toLowerCase().trim();
+            const userLabel = userLabels[normalizedWord];
+            
+            // ユーザーラベルがある場合は黄色、ない場合は青色
+            let wordClass;
+            if (userLabel) {
+                // ユーザーラベルがある場合：黄色ハイライト
+                wordClass = `word ${multiWordClass} has-user-label`.trim();
+            } else {
+                // ユーザーラベルがない場合：青色ハイライト（交互）
+                const colorClass = (index % 2 === 0) ? 'color-1' : 'color-2';
+                wordClass = `word ${colorClass} ${multiWordClass}`.trim();
+            }
+            
+            const replacement = `<span class="${wordClass}" data-meaning="${match.meaning}" data-word="${matched}">${matched}</span>`;
             
             text = text.substring(0, match.start) + replacement + text.substring(match.end);
         });
@@ -147,15 +169,20 @@ function renderContent(data, vocabulary, words, isHardMode) {
             showTranslation(this, meaning);
         });
     });
+    
+    // ユーザーラベルイベントを追加
+    if (window.attachUserLabelEvents) {
+        window.attachUserLabelEvents();
+    }
 }
 
 // コンテンツを再レンダリングする関数
-function reloadContent(vocabulary, words, isHardMode) {
+function reloadContent(vocabulary, words, isHardMode, userLabels = {}) {
     fetch('data.json')
         .then(response => response.json())
         .then(jsonData => {
             const data = jsonData.text;
-            renderContent(data, vocabulary, words, isHardMode);
+            renderContent(data, vocabulary, words, isHardMode, userLabels);
         })
         .catch(error => {
             document.getElementById('content').innerHTML = 'Error loading JSON file: ' + error.message;

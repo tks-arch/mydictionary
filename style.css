@@ -211,3 +211,104 @@ body.hard-mode .word.multi-word:hover {
     color: #333;
 }
 
+/* ユーザーラベル関連のスタイル */
+.user-label-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+.user-label-modal.show {
+    display: flex;
+}
+
+.user-label-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    max-width: 400px;
+    width: 90%;
+}
+
+.user-label-content h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.user-label-content .selected-word {
+    font-weight: bold;
+    color: #007bff;
+    margin-bottom: 15px;
+}
+
+.user-label-content input {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 15px;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.user-label-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.user-label-buttons button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.user-label-buttons .btn-save {
+    background-color: #007bff;
+    color: white;
+}
+
+.user-label-buttons .btn-delete {
+    background-color: #dc3545;
+    color: white;
+}
+
+.user-label-buttons .btn-cancel {
+    background-color: #6c757d;
+    color: white;
+}
+
+.user-label-buttons button:hover {
+    opacity: 0.9;
+}
+
+/* ラベルが付いた単語のスタイル */
+.word.has-user-label {
+    background-color: #fff9c4 !important;
+}
+
+.word.has-user-label:hover {
+    background-color: #fff59d !important;
+}
+
+/* Hardモード時でもラベル付き単語は黄色いハイライト */
+body.hard-mode .word.has-user-label {
+    background-color: #fff9c4 !important;
+    padding: 2px 4px;
+}
+
+body.hard-mode .word.has-user-label:hover {
+    background-color: #fff59d !important;
+}
+

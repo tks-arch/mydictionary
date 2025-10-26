@@ -34,7 +34,23 @@
         </div>
     </div>
     <div id="tooltip" class="tooltip"></div>
+    
+    <!-- ユーザーラベルモーダル -->
+    <div id="userLabelModal" class="user-label-modal">
+        <div class="user-label-content">
+            <h3>ユーザーラベルを追加</h3>
+            <div class="selected-word" id="selectedWord"></div>
+            <input type="text" id="userLabelInput" placeholder="ラベルを入力してください" maxlength="50">
+            <div class="user-label-buttons">
+                <button class="btn-delete" id="btnDeleteLabel">削除</button>
+                <button class="btn-cancel" id="btnCancelLabel">キャンセル</button>
+                <button class="btn-save" id="btnSaveLabel">保存</button>
+            </div>
+        </div>
+    </div>
+    
     <script src="pwa.js"></script>
+    <script src="translation.js"></script>
     <script src="renderer.js"></script>
     <script src="script.js"></script>
 </body>
