@@ -46,6 +46,7 @@
     
   },
   "words": {
+    "could":"した",
     "Down": "下",
     "the": "その",
     "rabbit" : "ウサギ",
@@ -102,7 +103,8 @@
     "pleasure" : "楽しい",
     "making" : "作ること",
     "daisy-chain" : "ヒナギクの鎖",
-    "would be worth" : "〜の価値があるだろうか",
+    "would be" : "〜だろう",
+    "worth the" : "worth + 目的語で　～に見合う価値がある",
     "trouble" : "面倒",
     "getting up" : "立ち上がること"
   }

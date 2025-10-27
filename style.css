@@ -1,3 +1,29 @@
+:root {
+    /* カラーパレット */
+    --color-primary: #007bff;
+    --color-primary-dark: #0056b3;
+    --color-success: #28a745;
+    --color-warning: #ffc107;
+    --color-danger: #dc3545;
+    --color-secondary: #6c757d;
+    
+    /* 背景色 */
+    --bg-light: #f8f9fa;
+    --bg-white: white;
+    --bg-dark: #333;
+    --bg-highlight-blue: #bbdefb;
+    --bg-highlight-yellow: #97f87e;
+    --bg-highlight-hover: #fff59d;
+    --bg-highlight-gray: #e0e0e0;
+    
+    /* ボーダー色 */
+    --border-color: #dee2e6;
+    
+    /* テキスト色 */
+    --text-dark: #333;
+    --text-muted: #495057;
+}
+
 html, body {
     height: 100%;
     margin: 0;
@@ -10,102 +36,94 @@ body {
 
 .header {
     padding: 20px;
-    background-color: #f8f9fa;
-    border-bottom: 1px solid #dee2e6;
+    background-color: var(--bg-light);
+    border-bottom: 1px solid var(--border-color);
 }
 
 .mode-switch-container {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: 5px;
     margin-bottom: 15px;
 }
 
-.mode-label {
+.mode-button {
+    padding: 8px 20px;
+    border: 2px solid var(--border-color);
+    background-color: var(--bg-white);
+    color: var(--text-muted);
     font-size: 14px;
     font-weight: 500;
-    color: #495057;
-}
-
-/* スイッチのスタイル */
-.switch {
-    position: relative;
-    display: inline-block;
-    width: 50px;
-    height: 24px;
-}
-
-.switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-
-.slider {
-    position: absolute;
     cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #28a745;
-    transition: .4s;
-    border-radius: 24px;
+    transition: all 0.3s;
+    border-radius: 4px;
 }
 
-.slider:before {
-    position: absolute;
-    content: "";
-    height: 18px;
-    width: 18px;
-    left: 3px;
-    bottom: 3px;
-    background-color: white;
-    transition: .4s;
-    border-radius: 50%;
+.mode-button:first-child {
+    border-radius: 20px 4px 4px 20px;
 }
 
-input:checked + .slider {
-    background-color: #dc3545;
+.mode-button:last-child {
+    border-radius: 4px 20px 20px 4px;
 }
 
-input:checked + .slider:before {
-    transform: translateX(26px);
+.mode-button:hover {
+    background-color: var(--bg-light);
 }
 
-/* Hardモード時のスタイル */
-body.hard-mode .word {
+.mode-button.active {
+    color: var(--bg-white);
+}
+
+.mode-button.active[data-mode="easy"] {
+    background-color: var(--color-success);
+    border-color: var(--color-success);
+}
+
+.mode-button.active[data-mode="normal"] {
+    background-color: var(--color-warning);
+    border-color: var(--color-warning);
+}
+
+.mode-button.active[data-mode="hard"] {
+    background-color: var(--color-danger);
+    border-color: var(--color-danger);
+}
+
+/* Normalモード時のスタイル */
+body.normal-mode .word {
     background-color: transparent !important;
     padding: 0;
 }
 
-body.hard-mode .word:hover {
+body.normal-mode .word:hover {
     background-color: transparent !important;
 }
 
-/* Hardモード時の隠し機能: Ctrl+Shift+Dで灰色ハイライト表示 */
-body.hard-mode.show-hard-highlights .word {
-    background-color: #f5f5f5 !important;
+/* Normalモード時の隠し機能: Ctrl+Shift+Dで灰色ハイライト表示 */
+body.normal-mode.show-hard-highlights .word {
+    background-color: var(--bg-light) !important;
     padding: 2px 4px;
 }
 
-body.hard-mode.show-hard-highlights .word:hover {
-    background-color: #e0e0e0 !important;
+body.normal-mode.show-hard-highlights .word:hover {
+    background-color: var(--bg-highlight-gray) !important;
 }
 
-/* Hardモード時でも2語以上の熟語はハイライト表示 */
-body.hard-mode .word.multi-word {
-    background-color: #e3f2fd !important;
+/* Normalモード時でも2語以上の熟語はハイライト表示 */
+body.normal-mode .word.multi-word {
+    background-color: var(--bg-highlight-blue) !important;
     padding: 2px 4px;
 }
 
-body.hard-mode .word.multi-word.color-2 {
-    background-color: #bbdefb !important;
+body.normal-mode .word.multi-word:hover {
+    background-color: var(--bg-highlight-hover) !important;
 }
 
-body.hard-mode .word.multi-word:hover {
-    background-color: #90caf9 !important;
+/* Hardモード時のスタイル（辞書表示なし、ユーザーラベルのみ） */
+body.hard-mode .word {
+    display: none;
 }
 
 .main-container {
@@ -122,8 +140,8 @@ body.hard-mode .word.multi-word:hover {
 }
 
 .translation-area {
-    background-color: #f8f9fa;
-    border-top: 2px solid #dee2e6;
+    background-color: var(--bg-light);
+    border-top: 2px solid var(--border-color);
     padding: 20px;
     height: 30vh;
     overflow-y: auto;
@@ -144,42 +162,27 @@ body.hard-mode .word.multi-word:hover {
     margin: 0;
 }
 
-.bg-light {
-    border: 1px solid #d0d0d0;
-    margin-top: -1px;
-}
-
+.bg-light,
 .bg-dark {
-    border: 1px solid #d0d0d0;
+    border: 1px solid var(--border-color);
     margin-top: -1px;
-}
-
-.quote {
-    color: blue;
 }
 
 .word {
     cursor: pointer;
     padding: 2px 4px;
     border-radius: 3px;
-}
-
-.word.color-1 {
-    background-color: #e3f2fd; /* 薄い青 */
-}
-
-.word.color-2 {
-    background-color: #bbdefb; /* 濃い青 */
+    background-color: var(--bg-highlight-blue);
 }
 
 .word:hover {
-    background-color: #90caf9; /* ホバー時はさらに濃い青 */
+    background-color: var(--bg-highlight-hover);
 }
 
 .tooltip {
     position: fixed;
-    background-color: #333;
-    color: white;
+    background-color: var(--bg-dark);
+    color: var(--bg-white);
     padding: 8px;
     border-radius: 4px;
     font-size: 14px;
@@ -191,24 +194,24 @@ body.hard-mode .word.multi-word:hover {
 .translation-content {
     font-size: 16px;
     line-height: 1.5;
-    color: #333;
+    color: var(--text-dark);
 }
 
 /* Translation item styles */
 .translation-item {
     margin-bottom: 10px;
     padding: 10px;
-    background-color: white;
+    background-color: var(--bg-white);
     border-radius: 4px;
-    border-left: 4px solid #007bff;
+    border-left: 4px solid var(--color-primary);
 }
 
 .translation-word {
-    color: #007bff;
+    color: var(--color-primary);
 }
 
 .translation-meaning {
-    color: #333;
+    color: var(--text-dark);
 }
 
 /* ユーザーラベル関連のスタイル */
@@ -230,7 +233,7 @@ body.hard-mode .word.multi-word:hover {
 }
 
 .user-label-content {
-    background-color: white;
+    background-color: var(--bg-white);
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
@@ -241,12 +244,12 @@ body.hard-mode .word.multi-word:hover {
 .user-label-content h3 {
     margin-top: 0;
     margin-bottom: 15px;
-    color: #333;
+    color: var(--text-dark);
 }
 
 .user-label-content .selected-word {
     font-weight: bold;
-    color: #007bff;
+    color: var(--color-primary);
     margin-bottom: 15px;
 }
 
@@ -254,7 +257,7 @@ body.hard-mode .word.multi-word:hover {
     width: 100%;
     padding: 8px;
     margin-bottom: 15px;
-    border: 1px solid #dee2e6;
+    border: 1px solid var(--border-color);
     border-radius: 4px;
     font-size: 14px;
     box-sizing: border-box;
@@ -272,51 +275,45 @@ body.hard-mode .word.multi-word:hover {
     border-radius: 4px;
     cursor: pointer;
     font-size: 14px;
-}
-
-.user-label-buttons .btn-save {
-    background-color: #007bff;
-    color: white;
-}
-
-.user-label-buttons .btn-delete {
-    background-color: #dc3545;
-    color: white;
-}
-
-.user-label-buttons .btn-cancel {
-    background-color: #6c757d;
-    color: white;
+    color: var(--bg-white);
 }
 
 .user-label-buttons button:hover {
     opacity: 0.9;
 }
 
-/* ラベルが付いた単語のスタイル */
-.word.has-user-label {
-    background-color: #fff9c4 !important;
+.user-label-buttons .btn-save {
+    background-color: var(--color-primary);
 }
 
-.word.has-user-label:hover {
-    background-color: #fff59d !important;
+.user-label-buttons .btn-delete {
+    background-color: var(--color-danger);
 }
 
-/* Hardモード時でもラベル付き単語は黄色いハイライト */
+.user-label-buttons .btn-cancel {
+    background-color: var(--color-secondary);
+}
+
+/* ラベルが付いた単語のスタイル（全モード共通） */
+.word.has-user-label,
+body.normal-mode .word.has-user-label,
 body.hard-mode .word.has-user-label {
-    background-color: #fff9c4 !important;
+    background-color: var(--bg-highlight-yellow) !important;
     padding: 2px 4px;
+    display: inline !important;
 }
 
+.word.has-user-label:hover,
+body.normal-mode .word.has-user-label:hover,
 body.hard-mode .word.has-user-label:hover {
-    background-color: #fff59d !important;
+    background-color: var(--bg-highlight-hover) !important;
 }
 
 /* 選択テキスト用フローティングボタン */
 .floating-save-button {
     position: fixed;
-    background-color: #007bff;
-    color: white;
+    background-color: var(--color-primary);
+    color: var(--bg-white);
     border: none;
     border-radius: 50%;
     width: 56px;
@@ -337,6 +334,6 @@ body.hard-mode .word.has-user-label:hover {
 
 .floating-save-button:active {
     transform: scale(0.95);
-    background-color: #0056b3;
+    background-color: var(--color-primary-dark);
 }
 

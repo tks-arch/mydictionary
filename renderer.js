@@ -1,7 +1,8 @@
 // レンダリング関連の関数を集めたモジュール
+// ヘルパー関数はhelpers.jsで定義されています
 
 // コンテンツをレンダリングする関数
-function renderContent(data, vocabulary, words, isHardMode, userLabels = {}) {
+function renderContent(data, vocabulary, words, currentMode, userLabels = {}) {
     // 現在の文を保存して新しい文を開始するヘルパー
     const saveSentence = (sentences, sentence) => {
         if (sentence.trim()) {
@@ -26,6 +27,20 @@ function renderContent(data, vocabulary, words, isHardMode, userLabels = {}) {
             // 閉じ引用符 - 現在の文に追加して保存
             else {
                 currentSentence += char;
+                
+                // 次の文字が ; や , の場合、それらも現在の文に含める
+                let nextIndex = i + 1;
+                while (nextIndex < data.length) {
+                    const nextChar = data[nextIndex];
+                    if (nextChar === ';' || nextChar === ',') {
+                        currentSentence += nextChar;
+                        i = nextIndex; // インデックスを進める
+                        nextIndex++;
+                    } else {
+                        break; // ; , 以外が来たら終了
+                    }
+                }
+                
                 saveSentence(sentences, currentSentence);
                 currentSentence = '';
             }
@@ -36,15 +51,43 @@ function renderContent(data, vocabulary, words, isHardMode, userLabels = {}) {
         } else if (char === ')') {
             // 閉じ括弧 - 現在の文に追加して保存
             currentSentence += char;
+            
+            // 次の文字が ; や , の場合、それらも現在の文に含める
+            let nextIndex = i + 1;
+            while (nextIndex < data.length) {
+                const nextChar = data[nextIndex];
+                if (nextChar === ';' || nextChar === ',') {
+                    currentSentence += nextChar;
+                    i = nextIndex; // インデックスを進める
+                    nextIndex++;
+                } else {
+                    break; // ; , 以外が来たら終了
+                }
+            }
+            
             saveSentence(sentences, currentSentence);
             currentSentence = '';
         } else if (SENTENCE_ENDINGS.includes(char) && !status.inAnyContainer) {
-            // 文の終わり - 保存
+            // 文の終わり - 次の文字を確認
             currentSentence += char;
+            
+            // 次の文字が ; や , の場合、それらも現在の文に含める
+            let nextIndex = i + 1;
+            while (nextIndex < data.length) {
+                const nextChar = data[nextIndex];
+                if (nextChar === ';' || nextChar === ',') {
+                    currentSentence += nextChar;
+                    i = nextIndex; // インデックスを進める
+                    nextIndex++;
+                } else {
+                    break; // ; , 以外が来たら終了
+                }
+            }
+            
             saveSentence(sentences, currentSentence);
             currentSentence = '';
-        } else if (char !== '\n' && char !== '\r') {
-            // 現在の文に文字を追加（改行はスキップ）
+        } else {
+            // 現在の文に文字を追加（改行も含めてすべて処理）
             currentSentence += char;
         }
     }
@@ -55,7 +98,14 @@ function renderContent(data, vocabulary, words, isHardMode, userLabels = {}) {
     
     // 使用する辞書を決定（モードに応じて切り替え）
     const getDictionary = () => {
-        return isHardMode ? words : vocabulary;
+        if (currentMode === 'easy') {
+            return vocabulary;
+        } else if (currentMode === 'normal') {
+            return words;
+        } else {
+            // Hardモード: 空の辞書（ユーザーラベルのみ表示）
+            return {};
+        }
     };
     
     // 辞書を前処理：正規化されたマップを作成し長さでソート
@@ -64,17 +114,22 @@ function renderContent(data, vocabulary, words, isHardMode, userLabels = {}) {
         
         // ユーザーラベルを辞書に統合
         const combinedDict = { ...dict };
-        Object.keys(userLabels).forEach(labelKey => {
-            // ユーザーラベルのキー（単語）を辞書に追加（意味としてラベル値を使用）
-            combinedDict[labelKey] = userLabels[labelKey];
+        Object.keys(userLabels).forEach(normalizedKey => {
+            const userLabelEntry = userLabels[normalizedKey];
+            // ユーザーラベルのoriginalをキーとして追加
+            combinedDict[userLabelEntry.original] = userLabelEntry.label;
         });
         
-        return Object.keys(combinedDict).map(word => ({
-            original: word,
-            normalized: word.toLowerCase(),
-            meaning: combinedDict[word],
-            length: word.length
-        })).sort((a, b) => b.length - a.length);
+        return Object.keys(combinedDict).map(word => {
+            // 記号とスペースを削除して正規化（アルファベットのみ）
+            const normalizedWord = word.replace(/[^a-zA-Z]/g, '');
+            return {
+                original: word,
+                normalized: normalizedWord.toLowerCase(),
+                meaning: combinedDict[word],
+                length: normalizedWord.length  // 正規化後の長さでソート
+            };
+        }).sort((a, b) => b.length - a.length);
     };
     
     // 文中の辞書マッチを検索する関数
@@ -122,19 +177,18 @@ function renderContent(data, vocabulary, words, isHardMode, userLabels = {}) {
             const matched = text.substring(match.start, match.end);
             const multiWordClass = matched.includes(' ') ? 'multi-word' : '';
             
-            // ユーザーラベルをチェック
-            const normalizedWord = matched.toLowerCase().trim();
-            const userLabel = userLabels[normalizedWord];
+            // ユーザーラベルをチェック（記号とスペースを削除して正規化）
+            const normalizedWord = matched.replace(/[^a-zA-Z]/g, '').toLowerCase();
+            const userLabelEntry = userLabels[normalizedWord];
             
-            // ユーザーラベルがある場合は黄色、ない場合は青色
+            // ユーザーラベルがある場合は緑色、ない場合は青色
             let wordClass;
-            if (userLabel) {
-                // ユーザーラベルがある場合：黄色ハイライト
+            if (userLabelEntry) {
+                // ユーザーラベルがある場合：緑色ハイライト
                 wordClass = `word ${multiWordClass} has-user-label`.trim();
             } else {
-                // ユーザーラベルがない場合：青色ハイライト（交互）
-                const colorClass = (index % 2 === 0) ? 'color-1' : 'color-2';
-                wordClass = `word ${colorClass} ${multiWordClass}`.trim();
+                // ユーザーラベルがない場合：青色ハイライト
+                wordClass = `word ${multiWordClass}`.trim();
             }
             
             const replacement = `<span class="${wordClass}" data-meaning="${match.meaning}" data-word="${matched}">${matched}</span>`;
@@ -150,8 +204,7 @@ function renderContent(data, vocabulary, words, isHardMode, userLabels = {}) {
         div.className = 'sentence ' + (index % 2 === 0 ? 'bg-light' : 'bg-dark');
         
         // テキストフォーマットを適用
-        let processedSentence = sentence
-            .replace(QUOTE_PATTERN, '<span class="quote">"$1"</span>');
+        let processedSentence = sentence;
         
         // 辞書マッチを検索して適用
         const matches = findMatches(processedSentence);
@@ -177,12 +230,12 @@ function renderContent(data, vocabulary, words, isHardMode, userLabels = {}) {
 }
 
 // コンテンツを再レンダリングする関数
-function reloadContent(vocabulary, words, isHardMode, userLabels = {}) {
+function reloadContent(vocabulary, words, currentMode, userLabels = {}) {
     fetch('data.json')
         .then(response => response.json())
         .then(jsonData => {
             const data = jsonData.text;
-            renderContent(data, vocabulary, words, isHardMode, userLabels);
+            renderContent(data, vocabulary, words, currentMode, userLabels);
         })
         .catch(error => {
             document.getElementById('content').innerHTML = 'Error loading JSON file: ' + error.message;
