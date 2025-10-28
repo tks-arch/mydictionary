@@ -81,6 +81,11 @@ function setupUserLabelModal() {
         input.value = '';
     }
     
+    // モーダルを開く関数をグローバルに公開
+    window.openUserLabelModal = function(normalizedWord) {
+        showModal(normalizedWord, null);
+    };
+    
     // 保存ボタン
     btnSave.addEventListener('click', function() {
         if (currentWord) {
