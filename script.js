@@ -8,6 +8,9 @@ let currentMode = 'easy'; // 'easy', 'normal', 'hard'
 // ユーザーラベルデータを格納するグローバル変数
 let userLabels = {};
 
+// 最後にクリックされたラベルの単語を格納
+let lastClickedLabel = null;
+
 // ユーザーラベルをlocalStorageから読み込む
 function loadUserLabels() {
     const saved = localStorage.getItem('userLabels');
@@ -58,13 +61,17 @@ function setupUserLabelModal() {
     
     let currentWord = null;
     let currentElement = null;
+    let currentOriginalWord = null;  // オリジナルの単語（表示用）
+    let currentMeaning = null;  // 元の意味（辞書の訳）
     
     // モーダルを表示
-    function showModal(word, element) {
+    function showModal(word, element, originalWord = null, meaning = null) {
         currentWord = word;
         currentElement = element;
+        currentOriginalWord = originalWord || word;
+        currentMeaning = meaning;
         // 受け取ったテキストはすでに正規化されているのでそのまま表示
-        selectedWordDiv.textContent = word;
+        selectedWordDiv.textContent = currentOriginalWord;
         
         const existingLabel = getUserLabel(word);
         input.value = existingLabel || '';
@@ -82,38 +89,84 @@ function setupUserLabelModal() {
     }
     
     // モーダルを開く関数をグローバルに公開
-    window.openUserLabelModal = function(normalizedWord) {
-        showModal(normalizedWord, null);
+    window.openUserLabelModal = function(normalizedWord, originalWord = null, meaning = null) {
+        showModal(normalizedWord, null, originalWord, meaning);
     };
+    
+    // 訳領域を更新する関数
+    function updateTranslationArea() {
+        if (currentWord && currentOriginalWord) {
+            const translationDiv = document.getElementById('translation');
+            const userLabel = getUserLabel(currentWord);
+            
+            // メモがある場合は訳を上書き、ない場合は通常の訳を表示
+            const displayContent = userLabel 
+                ? `<span class="translation-meaning">${userLabel}</span>`
+                : `<span class="translation-meaning">${currentMeaning || ''}</span>`;
+            
+            // イージーモードのときにラベル編集ボタンを追加
+            const editButtonHTML = currentMode === 'easy' 
+                ? `<button class="edit-label-button" data-normalized-word="${currentWord}" data-original-word="${currentOriginalWord}" data-meaning="${currentMeaning || ''}">✏️ 編集</button>`
+                : '';
+            
+            // フォーマットされた翻訳表示を作成
+            const translationHTML = `
+                <div class="translation-item">
+                    <strong class="translation-word">${currentOriginalWord}</strong>
+                    ${editButtonHTML}
+                    <br>
+                    ${displayContent}
+                </div>
+            `;
+            
+            // 翻訳エリアを更新
+            translationDiv.innerHTML = translationHTML;
+            
+            // イージーモードのときにボタンにイベントリスナーを追加
+            if (currentMode === 'easy') {
+                const editButton = translationDiv.querySelector('.edit-label-button');
+                if (editButton) {
+                    editButton.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const normalizedWord = this.getAttribute('data-normalized-word');
+                        const originalWord = this.getAttribute('data-original-word');
+                        const meaning = this.getAttribute('data-meaning');
+                        if (window.openUserLabelModal) {
+                            window.openUserLabelModal(normalizedWord, originalWord, meaning);
+                        }
+                    });
+                }
+            }
+        }
+    }
     
     // 保存ボタン
     btnSave.addEventListener('click', function() {
         if (currentWord) {
-            const wordToReselect = currentWord; // 再選択用に保存
             setUserLabel(currentWord, input.value);
-            hideModal();
-            // レンダリングを更新してから、編集した単語を再選択
-            reloadContent(vocabulary, words, currentMode, userLabels, function() {
-                reselectWord(wordToReselect);
-            });
-        } else {
-            hideModal();
+            // レンダリングを更新
+            reloadContent(vocabulary, words, currentMode, userLabels);
+            // 訳領域を更新
+            updateTranslationArea();
         }
+        hideModal();
     });
     
     // 削除ボタン
     btnDelete.addEventListener('click', function() {
         if (currentWord) {
-            const wordToReselect = currentWord; // 再選択用に保存
             setUserLabel(currentWord, '');
-            hideModal();
-            // レンダリングを更新してから、編集した単語を再選択
-            reloadContent(vocabulary, words, currentMode, userLabels, function() {
-                reselectWord(wordToReselect);
-            });
-        } else {
-            hideModal();
+            // 削除の場合は最後にクリックされたラベルをクリア
+            if (lastClickedLabel === currentWord) {
+                lastClickedLabel = null;
+            }
+            // レンダリングを更新
+            reloadContent(vocabulary, words, currentMode, userLabels);
+            // 訳領域を更新
+            updateTranslationArea();
         }
+        hideModal();
     });
     
     // キャンセルボタン
@@ -139,104 +192,7 @@ function setupUserLabelModal() {
     
     // 単語要素にイベントを追加する関数（グローバルに公開）
     window.attachUserLabelEvents = function() {
-        // 右クリック編集機能は削除されました
-        // ラベルの追加・編集はフローティングボタンのみで行います
+        // 将来の拡張用
     };
-    
-    // 選択テキストからの保存はフローティングボタンのみで行う
-    // （右クリック、Shift+S、長押しは無効化）
-    
-    // フローティングボタンの設定
-    const floatingButton = document.getElementById('floatingSaveButton');
-    let selectionCheckTimer = null;
-    
-    // 選択テキストの変化を監視
-    function checkSelection() {
-        const selectedText = getSelectedText();
-        
-        if (selectedText && selectedText.length > 0) {
-            // 選択範囲の位置を取得
-            const selection = window.getSelection();
-            if (selection.rangeCount > 0) {
-                const range = selection.getRangeAt(0);
-                const rect = range.getBoundingClientRect();
-                
-                // ボタンを選択範囲の近くに表示
-                floatingButton.style.top = (rect.bottom + window.scrollY + 10) + 'px';
-                floatingButton.style.left = (rect.right + window.scrollX - 56) + 'px';
-                floatingButton.classList.add('show');
-            }
-        } else {
-            floatingButton.classList.remove('show');
-        }
-    }
-    
-    // 選択変更イベント
-    document.addEventListener('selectionchange', function() {
-        clearTimeout(selectionCheckTimer);
-        selectionCheckTimer = setTimeout(checkSelection, 100);
-    });
-    
-    // フローティングボタンのクリックイベント
-    floatingButton.addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        const selectedText = getSelectedText();
-        if (selectedText) {
-            // 段落をまたいでいるかチェック
-            if (isSelectionCrossingParagraphs()) {
-                alert('エラー: 段落をまたいだラベル付けはできません。\n1つの段落内でテキストを選択してください。');
-                return;
-            }
-            
-            // 選択テキストが有効かチェック（実際のテキスト内に存在するか確認）
-            const validatedText = checkIfMultipleWords(selectedText, currentMode, vocabulary, words);
-            if (validatedText) {
-                showModal(validatedText, null);
-                // ボタンを非表示
-                floatingButton.classList.remove('show');
-            } else {
-                // マッチしなかった場合はエラーを表示
-                alert('エラー: 選択されたテキストが本文内に見つかりませんでした。\n正しいテキストを選択してください。');
-                // ボタンを非表示
-                floatingButton.classList.remove('show');
-            }
-        }
-    });
-    
-    // モーダルを閉じたら選択を解除してボタンを非表示
-    const originalHideModal = hideModal;
-    hideModal = function() {
-        originalHideModal();
-        window.getSelection().removeAllRanges();
-        floatingButton.classList.remove('show');
-    };
-}
-
-// 単語を再選択して訳を表示する関数
-function reselectWord(normalizedWord) {
-    // 正規化された単語に一致する要素を探す
-    const wordElements = document.querySelectorAll('.word');
-    
-    for (const element of wordElements) {
-        const word = element.getAttribute('data-word') || element.textContent;
-        const elementNormalizedWord = word
-            .replace(/[^a-zA-Z\s-]/g, ' ')
-            .replace(/\s+/g, ' ')
-            .toLowerCase()
-            .trim();
-        
-        if (elementNormalizedWord === normalizedWord) {
-            // 最初に見つかった要素をクリックして訳を表示
-            const meaning = element.getAttribute('data-meaning');
-            showTranslation(element, meaning);
-            
-            // 該当要素までスクロール（オプション）
-            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            
-            break; // 最初の1つだけ
-        }
-    }
 }
 

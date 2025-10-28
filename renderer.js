@@ -220,14 +220,25 @@ function renderContent(data, vocabulary, words, currentMode, userLabels = {}) {
                 .trim();
             const userLabelEntry = userLabels[normalizedWord];
             
+            // 最後にクリックされた単語かチェック
+            const isLastClicked = (typeof lastClickedLabel !== 'undefined' && lastClickedLabel === normalizedWord);
+            
             // ユーザーラベルがある場合は緑色、ない場合は青色
             let wordClass;
             if (userLabelEntry) {
-                // ユーザーラベルがある場合：緑色ハイライト
-                wordClass = `word ${multiWordClass} has-user-label`.trim();
+                // ユーザーラベルがある場合
+                if (isLastClicked) {
+                    wordClass = `word ${multiWordClass} has-user-label latest-label`.trim();
+                } else {
+                    wordClass = `word ${multiWordClass} has-user-label`.trim();
+                }
             } else {
-                // ユーザーラベルがない場合：青色ハイライト
-                wordClass = `word ${multiWordClass}`.trim();
+                // ユーザーラベルがない場合（グレーの辞書単語）
+                if (isLastClicked) {
+                    wordClass = `word ${multiWordClass} latest-label`.trim();
+                } else {
+                    wordClass = `word ${multiWordClass}`.trim();
+                }
             }
             
             const replacement = `<span class="${wordClass}" data-meaning="${match.meaning}" data-word="${matched}">${matched}</span>`;
@@ -339,6 +350,22 @@ function renderContent(data, vocabulary, words, currentMode, userLabels = {}) {
         wordElement.addEventListener('click', function(e) {
             e.preventDefault();
             const meaning = this.getAttribute('data-meaning');
+            const word = this.getAttribute('data-word');
+            
+            // 正規化されたキーを取得（ハイフン保持、他記号はスペース、連続スペース削除）
+            const normalizedWord = word
+                .replace(/[^a-zA-Z\s-]/g, ' ')
+                .replace(/\s+/g, ' ')
+                .toLowerCase()
+                .trim();
+            
+            // 最後にクリックされた単語を更新
+            if (lastClickedLabel !== normalizedWord) {
+                lastClickedLabel = normalizedWord;
+                // レンダリングを更新
+                reloadContent(vocabulary, words, currentMode, userLabels);
+            }
+            
             showTranslation(this, meaning);
         });
     });
@@ -350,18 +377,12 @@ function renderContent(data, vocabulary, words, currentMode, userLabels = {}) {
 }
 
 // コンテンツを再レンダリングする関数
-function reloadContent(vocabulary, words, currentMode, userLabels = {}, callback = null) {
+function reloadContent(vocabulary, words, currentMode, userLabels = {}) {
     fetch('data.json')
         .then(response => response.json())
         .then(jsonData => {
             const data = jsonData.text;
             renderContent(data, vocabulary, words, currentMode, userLabels);
-            
-            // レンダリング完了後にコールバックを実行
-            if (callback && typeof callback === 'function') {
-                // DOMが更新されるまで少し待つ
-                setTimeout(callback, 50);
-            }
         })
         .catch(error => {
             document.getElementById('content').innerHTML = 'Error loading JSON file: ' + error.message;

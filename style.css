@@ -3,7 +3,7 @@
     --color-primary: #007bff;
     --color-primary-dark: #0056b3;
     --color-success: #28a745;
-    --color-warning: #ffc107;
+    --color-warning: #ee9459;
     --color-danger: #dc3545;
     --color-secondary: #6c757d;
     
@@ -11,9 +11,9 @@
     --bg-light: #f8f9fa;
     --bg-white: white;
     --bg-dark: #333;
-    --bg-highlight-blue: #bbdefb;
-    --bg-highlight-yellow: #97f87e;
-    --bg-highlight-hover: #fff59d;
+    --bg-highlight-blue: #e6e6e6;
+    --bg-highlight-yellow: #edfa7b;
+    --bg-highlight-hover: #beb349;
     --bg-highlight-gray: #e0e0e0;
     
     /* ボーダー色 */
@@ -97,28 +97,16 @@ body.normal-mode .word {
     padding: 0;
 }
 
-body.normal-mode .word:hover {
-    background-color: transparent !important;
-}
-
 /* Normalモード時の隠し機能: Ctrl+Shift+Dで灰色ハイライト表示 */
 body.normal-mode.show-hard-highlights .word {
     background-color: var(--bg-light) !important;
     padding: 2px 4px;
 }
 
-body.normal-mode.show-hard-highlights .word:hover {
-    background-color: var(--bg-highlight-gray) !important;
-}
-
 /* Normalモード時でも2語以上の熟語はハイライト表示 */
 body.normal-mode .word.multi-word {
     background-color: var(--bg-highlight-blue) !important;
     padding: 2px 4px;
-}
-
-body.normal-mode .word.multi-word:hover {
-    background-color: var(--bg-highlight-hover) !important;
 }
 
 /* Hardモード時のスタイル（辞書表示なし、ユーザーラベルのみ） */
@@ -173,10 +161,6 @@ body.hard-mode .word {
     padding: 2px 4px;
     border-radius: 3px;
     background-color: var(--bg-highlight-blue);
-}
-
-.word:hover {
-    background-color: var(--bg-highlight-hover);
 }
 
 .tooltip {
@@ -326,38 +310,22 @@ body.hard-mode .word.has-user-label {
     display: inline !important;
 }
 
-.word.has-user-label:hover,
-body.normal-mode .word.has-user-label:hover,
-body.hard-mode .word.has-user-label:hover {
-    background-color: var(--bg-highlight-hover) !important;
+/* 最新にクリックされたラベルのスタイル（乗算ブレンド計算済み） */
+/* 黄色 (#edfa7b) × RGB(173, 254, 255) = #a1f97b */
+.word.has-user-label.latest-label,
+body.normal-mode .word.has-user-label.latest-label,
+body.hard-mode .word.has-user-label.latest-label {
+    background-color: #a1f97b !important;
+    padding: 2px 4px;
+    display: inline !important;
 }
 
-/* 選択テキスト用フローティングボタン */
-.floating-save-button {
-    position: fixed;
-    background-color: var(--color-primary);
-    color: var(--bg-white);
-    border: none;
-    border-radius: 50%;
-    width: 56px;
-    height: 56px;
-    font-size: 24px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-    cursor: pointer;
-    z-index: 1500;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    transition: transform 0.2s;
-}
-
-.floating-save-button.show {
-    display: flex;
-}
-
-.floating-save-button:active {
-    transform: scale(0.95);
-    background-color: var(--color-primary-dark);
+/* 最新にクリックされた辞書単語のスタイル（乗算ブレンド計算済み） */
+/* グレー (#e6e6e6) × RGB(173, 254, 255) = #9ce5e6 */
+.word.latest-label:not(.has-user-label),
+body.normal-mode .word.latest-label:not(.has-user-label) {
+    background-color: #9ce5e6 !important;
+    padding: 2px 4px;
 }
 
 /* イタリック表示のスタイル */

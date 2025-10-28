@@ -15,15 +15,15 @@ function showTranslation(element, meaning) {
     // ユーザーラベルをチェック
     const userLabel = getUserLabel(normalizedWord);
     
+    // イージーモードのときにラベル編集ボタンを追加
+    const editButtonHTML = currentMode === 'easy' 
+        ? `<button class="edit-label-button" data-normalized-word="${normalizedWord}" data-original-word="${word}" data-meaning="${meaning}">✏️ 編集</button>`
+        : '';
+    
     // メモがある場合は訳を上書き、ない場合は通常の訳を表示
     const displayContent = userLabel 
         ? `<span class="translation-meaning">${userLabel}</span>`
         : `<span class="translation-meaning">${meaning}</span>`;
-    
-    // イージーモードのときにラベル編集ボタンを追加
-    const editButtonHTML = currentMode === 'easy' 
-        ? `<button class="edit-label-button" data-normalized-word="${normalizedWord}">✏️ 編集</button>`
-        : '';
     
     // フォーマットされた翻訳表示を作成
     const translationHTML = `
@@ -46,9 +46,11 @@ function showTranslation(element, meaning) {
                 e.preventDefault();
                 e.stopPropagation();
                 const normalizedWord = this.getAttribute('data-normalized-word');
+                const originalWord = this.getAttribute('data-original-word');
+                const meaning = this.getAttribute('data-meaning');
                 // モーダルを開く（script.jsで定義されているshowModal関数を使用）
                 if (window.openUserLabelModal) {
-                    window.openUserLabelModal(normalizedWord);
+                    window.openUserLabelModal(normalizedWord, originalWord, meaning);
                 }
             });
         }
