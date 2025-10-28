@@ -170,6 +170,12 @@ function renderContent(data, vocabulary, words, currentMode, userLabels = {}) {
         return matches;
     };
     
+    // アンダースコアで囲まれた部分をイタリック表示に変換する関数
+    const applyItalicFormatting = (text) => {
+        // _text_ パターンを <em>text</em> に変換
+        return text.replace(/_([^_]+)_/g, '<em>$1</em>');
+    };
+
     // マッチをテキストに適用する関数
     const applyMatches = (text, matches) => {
         matches.sort((a, b) => b.start - a.start);
@@ -205,6 +211,9 @@ function renderContent(data, vocabulary, words, currentMode, userLabels = {}) {
         
         // テキストフォーマットを適用
         let processedSentence = sentence;
+        
+        // アンダースコアで囲まれた部分をイタリック表示に変換（辞書マッチングより先に実行）
+        processedSentence = applyItalicFormatting(processedSentence);
         
         // 辞書マッチを検索して適用
         const matches = findMatches(processedSentence);

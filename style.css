@@ -337,3 +337,9 @@ body.hard-mode .word.has-user-label:hover {
     background-color: var(--color-primary-dark);
 }
 
+/* イタリック表示のスタイル */
+em {
+    font-style: italic;
+    color: var(--text-dark);
+}
+
