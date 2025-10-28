@@ -121,13 +121,12 @@ function renderContent(data, vocabulary, words, currentMode, userLabels = {}) {
         });
         
         return Object.keys(combinedDict).map(word => {
-            // 記号とスペースを削除して正規化（アルファベットのみ）
-            const normalizedWord = word.replace(/[^a-zA-Z]/g, '');
+            // 辞書のキーは既に正規化済み（小文字、ハイフン保持、スペース区切り）
             return {
                 original: word,
-                normalized: normalizedWord.toLowerCase(),
+                normalized: word.toLowerCase(),  // 念のため小文字化
                 meaning: combinedDict[word],
-                length: normalizedWord.length  // 正規化後の長さでソート
+                length: word.length  // 長さでソート
             };
         }).sort((a, b) => b.length - a.length);
     };
@@ -152,7 +151,7 @@ function renderContent(data, vocabulary, words, currentMode, userLabels = {}) {
         };
         
         for (let i = 0; i < text.length; i++) {
-            if (markedPositions.has(i) || isInsideHtmlTag(text, i) || !isAtWordBoundary(text, i)) {
+            if (markedPositions.has(i) || !isAtWordBoundary(text, i)) {
                 continue;
             }
             
@@ -170,12 +169,42 @@ function renderContent(data, vocabulary, words, currentMode, userLabels = {}) {
         return matches;
     };
     
-    // アンダースコアで囲まれた部分をイタリック表示に変換する関数
-    const applyItalicFormatting = (text) => {
-        // _text_ パターンを <em>text</em> に変換
-        return text.replace(/_([^_]+)_/g, '<em>$1</em>');
+    // イタリック部分を検出して記録する関数
+    const detectItalics = (text) => {
+        const italicRanges = [];
+        const regex = /_([^_]+)_/g;
+        let match;
+        
+        while ((match = regex.exec(text)) !== null) {
+            italicRanges.push({
+                start: match.index,
+                end: regex.lastIndex,
+                content: match[1]  // アンダースコアを除いた内容
+            });
+        }
+        
+        return italicRanges;
     };
-
+    
+    // アンダースコアを除去する関数
+    const removeUnderscores = (text) => {
+        return text.replace(/_/g, '');
+    };
+    
+    // イタリック位置を調整する関数（アンダースコア除去後の位置に変換）
+    const adjustItalicPositions = (italicRanges) => {
+        return italicRanges.map((range, index) => {
+            // 各イタリック範囲の前にあるアンダースコアの数を計算
+            const underscoresBeforeStart = index * 2;  // 前のイタリック範囲の_2つ分
+            
+            return {
+                start: range.start - underscoresBeforeStart,  // 開始アンダースコア分を減算
+                end: range.end - underscoresBeforeStart - 2,  // 開始+終了アンダースコア分を減算
+                content: range.content
+            };
+        });
+    };
+    
     // マッチをテキストに適用する関数
     const applyMatches = (text, matches) => {
         matches.sort((a, b) => b.start - a.start);
@@ -183,8 +212,12 @@ function renderContent(data, vocabulary, words, currentMode, userLabels = {}) {
             const matched = text.substring(match.start, match.end);
             const multiWordClass = matched.includes(' ') ? 'multi-word' : '';
             
-            // ユーザーラベルをチェック（記号とスペースを削除して正規化）
-            const normalizedWord = matched.replace(/[^a-zA-Z]/g, '').toLowerCase();
+            // ユーザーラベルをチェック（ハイフン保持、他記号はスペース、連続スペース削除）
+            const normalizedWord = matched
+                .replace(/[^a-zA-Z\s-]/g, ' ')
+                .replace(/\s+/g, ' ')
+                .toLowerCase()
+                .trim();
             const userLabelEntry = userLabels[normalizedWord];
             
             // ユーザーラベルがある場合は緑色、ない場合は青色
@@ -204,20 +237,98 @@ function renderContent(data, vocabulary, words, currentMode, userLabels = {}) {
         return text;
     };
     
+    // イタリック範囲をHTMLテキストに適用する関数（最適化版）
+    const applyItalicsToHtml = (htmlText, italicRanges) => {
+        if (italicRanges.length === 0) return htmlText;
+        
+        // 1回の走査で全てのイタリック範囲のHTML位置を計算
+        const htmlPositions = [];
+        let plainTextPos = 0;
+        let htmlPos = 0;
+        let rangeIndex = 0;
+        
+        // イタリック範囲を開始位置でソート
+        const sortedRanges = [...italicRanges].sort((a, b) => a.start - b.start);
+        
+        // HTML全体を1回だけ走査
+        while (htmlPos < htmlText.length && rangeIndex < sortedRanges.length) {
+            // HTMLタグをスキップ
+            if (htmlText[htmlPos] === '<') {
+                const tagEnd = htmlText.indexOf('>', htmlPos);
+                if (tagEnd !== -1) {
+                    htmlPos = tagEnd + 1;
+                    continue;
+                }
+            }
+            
+            const currentRange = sortedRanges[rangeIndex];
+            
+            // 開始位置を記録
+            if (plainTextPos === currentRange.start) {
+                if (!htmlPositions[rangeIndex]) {
+                    htmlPositions[rangeIndex] = {};
+                }
+                htmlPositions[rangeIndex].start = htmlPos;
+            }
+            
+            // 終了位置を記録
+            if (plainTextPos === currentRange.end) {
+                if (!htmlPositions[rangeIndex]) {
+                    htmlPositions[rangeIndex] = {};
+                }
+                htmlPositions[rangeIndex].end = htmlPos;
+                rangeIndex++; // 次のイタリック範囲へ
+            }
+            
+            htmlPos++;
+            plainTextPos++;
+        }
+        
+        // 見つからなかった終了位置を補完
+        for (let i = 0; i < htmlPositions.length; i++) {
+            if (htmlPositions[i] && !htmlPositions[i].end) {
+                htmlPositions[i].end = htmlText.length;
+            }
+        }
+        
+        // 後ろから前へイタリックタグを挿入（位置がずれないように）
+        let result = htmlText;
+        for (let i = htmlPositions.length - 1; i >= 0; i--) {
+            const pos = htmlPositions[i];
+            if (pos && pos.start !== undefined) {
+                result = result.substring(0, pos.start) + 
+                        '<em>' + 
+                        result.substring(pos.start, pos.end) + 
+                        '</em>' + 
+                        result.substring(pos.end);
+            }
+        }
+        
+        return result;
+    };
+    
     // 各文を処理
     sentences.forEach((sentence, index) => {
         const div = document.createElement('div');
         div.className = 'sentence ' + (index % 2 === 0 ? 'bg-light' : 'bg-dark');
         
-        // テキストフォーマットを適用
-        let processedSentence = sentence;
+        // 1. イタリック部分を検出して記録
+        const italicRanges = detectItalics(sentence);
         
-        // アンダースコアで囲まれた部分をイタリック表示に変換（辞書マッチングより先に実行）
-        processedSentence = applyItalicFormatting(processedSentence);
+        // 2. アンダースコアを除去
+        const textWithoutUnderscores = removeUnderscores(sentence);
         
-        // 辞書マッチを検索して適用
-        const matches = findMatches(processedSentence);
-        processedSentence = applyMatches(processedSentence, matches);
+        // 3. イタリック位置を調整（アンダースコア除去後の位置に）
+        const adjustedItalicRanges = adjustItalicPositions(italicRanges);
+        
+        // 4. 辞書マッチを検索（アンダースコアなしのテキストで実行）
+        const matches = findMatches(textWithoutUnderscores);
+        
+        // 5. マッチをテキストに適用
+        let processedSentence = applyMatches(textWithoutUnderscores, matches);
+        
+        // 6. イタリックを最後に適用
+        processedSentence = applyItalicsToHtml(processedSentence, adjustedItalicRanges);
         
         div.innerHTML = processedSentence;
         contentDiv.appendChild(div);

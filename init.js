@@ -24,7 +24,8 @@ function loadAndRenderContent() {
         .then(jsonData => {
             const data = jsonData.text;
             vocabulary = jsonData.vocab || {};
-            words = jsonData.words || {};
+            // wordsはwords.jsとphrases.jsから読み込まれたデータを統合
+            words = { ...wordsData, ...phrasesData } || {};
             
             // renderer.jsのrenderContent関数を呼び出し
             renderContent(data, vocabulary, words, currentMode, userLabels);
@@ -131,4 +132,3 @@ function setupKeyboardShortcuts() {
 
 // アプリケーションを初期化
 initializeApp();
-

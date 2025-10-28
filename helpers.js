@@ -66,71 +66,74 @@ function isAtWordBoundary(text, position) {
 }
 
 // 特定の位置で辞書の単語とマッチングを試みるヘルパー関数
-// アルファベットと意味記号(!?)を文字として扱い、他の記号は境界として扱う
 function tryMatchAtPosition(text, startPos, vocabEntry) {
-    // 辞書の単語からアルファベットと!?のみを抽出（他の記号を削除）
-    const normalizedDict = vocabEntry.original.toLowerCase().replace(/[^a-zA-Z!?]/g, '');
+    // 辞書の単語は既に正規化済み
+    const normalizedDict = vocabEntry.normalized;
     
-    // テキストから候補を抽出
-    let endPos = startPos;
-    let extractedText = '';
-    let dictIndex = 0;
+    // マッチング開始位置から十分な長さのテキストを抽出
+    // 辞書の長さ + 記号分の余裕を見て抽出
+    const maxLength = normalizedDict.length * 2 + 10;
+    const textSegment = text.substring(startPos, startPos + maxLength);
     
-    // 辞書の単語を1文字ずつマッチング
-    while (dictIndex < normalizedDict.length && endPos < text.length) {
-        const textChar = text[endPos];
-        const dictChar = normalizedDict[dictIndex];
-        
-        // アルファベットの場合：マッチング
-        if (/[a-zA-Z]/.test(textChar)) {
-            if (textChar.toLowerCase() === dictChar.toLowerCase()) {
-                extractedText += textChar;
-                endPos++;
-                dictIndex++;
-            } else {
-                // マッチしない
-                return null;
-            }
-        }
-        // 意味記号(!?)の場合：マッチング
-        else if (MEANINGFUL_SYMBOLS.test(textChar)) {
-            if (textChar === dictChar) {
-                extractedText += textChar;
-                endPos++;
-                dictIndex++;
-            } else {
-                // 記号が一致しない → マッチ失敗
-                return null;
-            }
-        }
-        // その他の記号・スペースの場合：スキップ（境界として扱う）
-        else {
-            extractedText += textChar;
-            endPos++;
-            // dictIndexは進めない（辞書の同じ位置で次の文字を待つ）
-        }
-    }
+    // テキストを正規化
+    // 1. 記号をスペースに変換（A-Z, a-z, -, スペース以外）
+    // 2. 連続スペース削除
+    // 3. 小文字化
+    const normalizedText = textSegment
+        .replace(/[^a-zA-Z\s-]/g, ' ')  // 1. 記号→スペース
+        .replace(/\s+/g, ' ')            // 2. 連続スペース削除
+        .toLowerCase();                  // 3. 小文字化
     
-    // 単語全体がマッチしたかをチェック
-    if (dictIndex !== normalizedDict.length) {
+    // 正規化されたテキストが辞書の単語で始まるかチェック
+    if (!normalizedText.startsWith(normalizedDict)) {
         return null;
     }
     
-    // マッチが単語境界で終わるかをチェック
-    if (endPos < text.length) {
-        const nextChar = text[endPos];
-        
-        // 次の文字は境界文字またはHTMLタグであるべき
-        // 意味記号(!?)は単語の一部として扱うので、ここではチェックしない
-        if (WORD_CHARS.test(nextChar)) {
-            return null; // 単語境界にない
-        }
+    // 辞書の単語の後が単語境界かチェック（スペースまたは終端）
+    const afterMatch = normalizedText[normalizedDict.length];
+    if (afterMatch !== undefined && afterMatch !== ' ') {
+        return null; // 単語境界にない
     }
+    
+    // 元のテキストでマッチした部分の終端位置を計算
+    // 正規化されたマッチ長に対応する元のテキストの範囲を特定
+    let endPos = startPos;
+    let currentNormalized = '';
+    
+    // 元のテキストを1文字ずつ正規化しながら、辞書の長さ分に達するまで進む
+    while (currentNormalized.length < normalizedDict.length && endPos < text.length) {
+        const char = text[endPos];
+        
+        // 1文字を正規化
+        let normalizedChar;
+        if (/[a-zA-Z-]/.test(char)) {
+            // A-Z, a-z, - はそのまま（小文字化）
+            normalizedChar = char.toLowerCase();
+        } else if (/\s/.test(char)) {
+            // スペース・改行はスペース
+            normalizedChar = ' ';
+        } else {
+            // その他の記号はスペース
+            normalizedChar = ' ';
+        }
+        
+        // 正規化した文字を追加
+        if (currentNormalized.length === 0 || currentNormalized[currentNormalized.length - 1] !== ' ' || normalizedChar !== ' ') {
+            // 連続スペースを防ぐ：前の文字がスペースで今の文字もスペースならスキップ
+            if (!(currentNormalized[currentNormalized.length - 1] === ' ' && normalizedChar === ' ')) {
+                currentNormalized += normalizedChar;
+            }
+        }
+        
+        endPos++;
+    }
+    
+    const matched = text.substring(startPos, endPos);
     
     return {
         start: startPos,
         end: endPos,
-        matched: extractedText,
+        matched: matched,
         meaning: vocabEntry.meaning
     };
 }
@@ -182,16 +185,90 @@ function isSelectionCrossingParagraphs() {
     return startSentence && endSentence && startSentence !== endSentence;
 }
 
-// 選択テキストが有効かチェック
-// 辞書チェックは行わず、空でなければOK（完全自由モード）
+// 選択テキストを段階的にマッチングして最適なテキストを返す
 function checkIfMultipleWords(text, currentMode, vocabulary, words) {
     const normalizedText = text.toLowerCase().trim();
     
-    // 空の文字列でなければOK
+    // 空の文字列の場合はnullを返す
     if (!normalizedText) {
         return null;
     }
     
-    return text;
+    // contentエリアからプレーンテキストを取得
+    const contentDiv = document.getElementById('content');
+    if (!contentDiv) {
+        return text; // contentが見つからない場合は元のテキストを返す
+    }
+    
+    // HTMLから実際のテキストを抽出（正規化）
+    // ハイフンは保持、その他の記号はスペースに変換、連続スペースを削除
+    const actualText = contentDiv.textContent
+        .replace(/[^a-zA-Z\s-]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .toLowerCase();
+    
+    // テキストを正規化してから単語に分割
+    const normalizedSelectedText = text
+        .replace(/[^a-zA-Z\s-]/g, ' ')  // 記号→スペース
+        .replace(/\s+/g, ' ')            // 連続スペース削除
+        .toLowerCase()
+        .trim();
+    
+    const wordArray = normalizedSelectedText.split(/\s+/);
+    
+    // マッチした結果を保存（より長いマッチで上書き）
+    let bestMatch = null;
+    
+    // 中央の単語インデックス
+    const centerIndex = Math.floor(wordArray.length / 2);
+    
+    // 幅（単語数）ごとに検索
+    for (let width = 1; width <= wordArray.length; width++) {
+        // 中央から左右にずらしながら検索
+        for (let start = 0; start <= wordArray.length - width; start++) {
+            const end = start + width;
+            const normalizedTrimmed = wordArray.slice(start, end).join(' ');
+            
+            if (isTextMatchWithWordBoundary(actualText, normalizedTrimmed)) {
+                // マッチした結果を正規化して保存（より長いものを優先）
+                bestMatch = normalizedTrimmed;
+            }
+        }
+    }
+    
+    // 最終的に見つかった最大のマッチを返す（正規化後のテキスト）
+    return bestMatch;
 }
+
+// 単語境界を意識してテキストがマッチするかチェックする関数
+function isTextMatchWithWordBoundary(actualText, searchText) {
+    if (!searchText) return false;
+    
+    // 検索テキストを正規化（連続するスペースを1つにまとめる）
+    const normalizedSearchText = searchText.trim().replace(/\s+/g, ' ');
+    
+    // 実際のテキストを単語に分割
+    const actualWords = actualText.split(/\s+/);
+    const searchWords = normalizedSearchText.split(/\s+/);
+    
+    // 検索テキストの単語数
+    const searchLength = searchWords.length;
+    
+    // スライディングウィンドウで検索
+    for (let i = 0; i <= actualWords.length - searchLength; i++) {
+        let match = true;
+        for (let j = 0; j < searchLength; j++) {
+            if (actualWords[i + j] !== searchWords[j]) {
+                match = false;
+                break;
+            }
+        }
+        if (match) {
+            return true;
+        }
+    }
+    
+    return false;
+}
+
 

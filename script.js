@@ -28,23 +28,21 @@ function saveUserLabels() {
 
 // ユーザーラベルを取得する関数（正規化されたキーで検索）
 function getUserLabel(word) {
-    // 記号とスペースを削除して正規化（アルファベットのみ）
-    const normalizedWord = word.replace(/[^a-zA-Z]/g, '').toLowerCase();
-    const entry = userLabels[normalizedWord];
+    // wordはすでに正規化されている
+    const entry = userLabels[word];
     return entry ? entry.label : null;
 }
 
 // ユーザーラベルを設定する関数
 function setUserLabel(word, label) {
-    // 記号とスペースを削除して正規化（アルファベットのみ）
-    const normalizedWord = word.replace(/[^a-zA-Z]/g, '').toLowerCase();
+    // wordはすでに正規化されている
     if (label && label.trim()) {
-        userLabels[normalizedWord] = {
-            original: word,  // 元のテキストを保存
+        userLabels[word] = {
+            original: word,  // 正規化されたテキストを保存
             label: label.trim()
         };
     } else {
-        delete userLabels[normalizedWord];
+        delete userLabels[word];
     }
     saveUserLabels();
 }
@@ -65,6 +63,7 @@ function setupUserLabelModal() {
     function showModal(word, element) {
         currentWord = word;
         currentElement = element;
+        // 受け取ったテキストはすでに正規化されているのでそのまま表示
         selectedWordDiv.textContent = word;
         
         const existingLabel = getUserLabel(word);
@@ -176,10 +175,15 @@ function setupUserLabelModal() {
                 return;
             }
             
-            // 選択テキストが有効かチェック（空でなければOK）
+            // 選択テキストが有効かチェック（実際のテキスト内に存在するか確認）
             const validatedText = checkIfMultipleWords(selectedText, currentMode, vocabulary, words);
             if (validatedText) {
                 showModal(validatedText, null);
+                // ボタンを非表示
+                floatingButton.classList.remove('show');
+            } else {
+                // マッチしなかった場合はエラーを表示
+                alert('エラー: 選択されたテキストが本文内に見つかりませんでした。\n正しいテキストを選択してください。');
                 // ボタンを非表示
                 floatingButton.classList.remove('show');
             }
