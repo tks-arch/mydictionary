@@ -22,7 +22,7 @@ function showTranslation(element, meaning) {
     
     // イージーモードのときにラベル編集ボタンを追加
     const editButtonHTML = currentMode === 'easy' 
-        ? `<button class="edit-label-button" data-normalized-word="${normalizedWord}" title="ラベルを編集">✏️</button>`
+        ? `<button class="edit-label-button" data-normalized-word="${normalizedWord}">✏️ 編集</button>`
         : '';
     
     // フォーマットされた翻訳表示を作成
