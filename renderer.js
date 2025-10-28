@@ -350,12 +350,18 @@ function renderContent(data, vocabulary, words, currentMode, userLabels = {}) {
 }
 
 // コンテンツを再レンダリングする関数
-function reloadContent(vocabulary, words, currentMode, userLabels = {}) {
+function reloadContent(vocabulary, words, currentMode, userLabels = {}, callback = null) {
     fetch('data.json')
         .then(response => response.json())
         .then(jsonData => {
             const data = jsonData.text;
             renderContent(data, vocabulary, words, currentMode, userLabels);
+            
+            // レンダリング完了後にコールバックを実行
+            if (callback && typeof callback === 'function') {
+                // DOMが更新されるまで少し待つ
+                setTimeout(callback, 50);
+            }
         })
         .catch(error => {
             document.getElementById('content').innerHTML = 'Error loading JSON file: ' + error.message;

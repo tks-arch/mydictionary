@@ -89,21 +89,31 @@ function setupUserLabelModal() {
     // 保存ボタン
     btnSave.addEventListener('click', function() {
         if (currentWord) {
+            const wordToReselect = currentWord; // 再選択用に保存
             setUserLabel(currentWord, input.value);
-            // レンダリングを更新
-            reloadContent(vocabulary, words, currentMode, userLabels);
+            hideModal();
+            // レンダリングを更新してから、編集した単語を再選択
+            reloadContent(vocabulary, words, currentMode, userLabels, function() {
+                reselectWord(wordToReselect);
+            });
+        } else {
+            hideModal();
         }
-        hideModal();
     });
     
     // 削除ボタン
     btnDelete.addEventListener('click', function() {
         if (currentWord) {
+            const wordToReselect = currentWord; // 再選択用に保存
             setUserLabel(currentWord, '');
-            // レンダリングを更新
-            reloadContent(vocabulary, words, currentMode, userLabels);
+            hideModal();
+            // レンダリングを更新してから、編集した単語を再選択
+            reloadContent(vocabulary, words, currentMode, userLabels, function() {
+                reselectWord(wordToReselect);
+            });
+        } else {
+            hideModal();
         }
-        hideModal();
     });
     
     // キャンセルボタン
@@ -202,5 +212,31 @@ function setupUserLabelModal() {
         window.getSelection().removeAllRanges();
         floatingButton.classList.remove('show');
     };
+}
+
+// 単語を再選択して訳を表示する関数
+function reselectWord(normalizedWord) {
+    // 正規化された単語に一致する要素を探す
+    const wordElements = document.querySelectorAll('.word');
+    
+    for (const element of wordElements) {
+        const word = element.getAttribute('data-word') || element.textContent;
+        const elementNormalizedWord = word
+            .replace(/[^a-zA-Z\s-]/g, ' ')
+            .replace(/\s+/g, ' ')
+            .toLowerCase()
+            .trim();
+        
+        if (elementNormalizedWord === normalizedWord) {
+            // 最初に見つかった要素をクリックして訳を表示
+            const meaning = element.getAttribute('data-meaning');
+            showTranslation(element, meaning);
+            
+            // 該当要素までスクロール（オプション）
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            break; // 最初の1つだけ
+        }
+    }
 }
 
